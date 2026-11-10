@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* Design tokens. Components use only these (bg-card, text-muted-fg, …), so light and dark both work. */
+:root {
+  --bg: #fafaf9;
+  --fg: #1c1917;
+  --card: #ffffff;
+  --muted: #f5f5f4;
+  --muted-fg: #57534e;
+  --border: #e7e5e4;
+  --accent: #15803d;
+  --accent-fg: #ffffff;
+  --accent-soft: #dcfce7;
+  --ok: #15803d;
+  --ok-soft: #dcfce7;
+  --warn: #a16207;
+  --warn-soft: #fef9c3;
+  --bad: #b91c1c;
+  --bad-soft: #fee2e2;
+  --info: #1d4ed8;
+  --info-soft: #dbeafe;
+  --ring: #15803d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c0a09;
+    --fg: #f5f5f4;
+    --card: #1c1917;
+    --muted: #292524;
+    --muted-fg: #a8a29e;
+    --border: #3a3532;
+    --accent: #22c55e;
+    --accent-fg: #052e16;
+    --accent-soft: #14532d;
+    --ok: #4ade80;
+    --ok-soft: #14532d;
+    --warn: #facc15;
+    --warn-soft: #422006;
+    --bad: #f87171;
+    --bad-soft: #450a0a;
+    --info: #93c5fd;
+    --info-soft: #1e3a8a;
+    --ring: #4ade80;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-fg: var(--muted-fg);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .transition-bar {
+    transition: width 400ms cubic-bezier(0.2, 0, 0, 1);
+  }
+}
