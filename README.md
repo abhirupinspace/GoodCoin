@@ -18,6 +18,7 @@ and readable on-chain, epochs are derived from block time, and anyone can settle
 |---|---|
 | Demo contract (minutes-long epochs, labeled `demo`) | [`goodcoin-demo-530a20.testnet`](https://testnet.nearblocks.io/address/goodcoin-demo-530a20.testnet) |
 | Production-parameter contract (7-day epochs, labeled `production`) | [`goodcoin-530a20.testnet`](https://testnet.nearblocks.io/address/goodcoin-530a20.testnet) |
+| Repository | https://github.com/abhirupinspace/GoodCoin |
 | Web app | `web/` — run locally (see below) |
 | Demo video / post | _added at submission_ |
 

@@ -4,7 +4,7 @@ description = "GOODCOIN: Proof of Good memecoin on NEAR (NEP-141). Immutable col
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/OWNER/goodcoin"
+repository = "https://github.com/abhirupinspace/GoodCoin"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
