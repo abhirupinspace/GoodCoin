@@ -1,17 +1,104 @@
-/* Placeholder styles until the design system lands. */
-:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-body { margin: 0; }
-.site-header, .site-footer { display: flex; gap: 1rem; align-items: center; padding: 1rem 1.5rem; flex-wrap: wrap; }
-.site-header nav, .site-footer nav { display: flex; gap: 1rem; flex: 1; flex-wrap: wrap; }
-.app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
-.app-sidebar { display: flex; flex-direction: column; gap: .75rem; padding: 1.5rem; border-right: 1px solid #8884; }
-.app-sidebar nav { display: flex; flex-direction: column; gap: .5rem; }
-.app-bottom-nav { display: none; }
-.outline { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
-.outline code { display: block; font-size: .8rem; opacity: .7; margin-top: .25rem; }
-.outline li { margin-bottom: 1rem; }
-@media (max-width: 720px) {
-  .app-shell { grid-template-columns: 1fr; }
-  .app-sidebar { display: none; }
-  .app-bottom-nav { display: flex; justify-content: space-around; position: fixed; bottom: 0; left: 0; right: 0; padding: .75rem; background: Canvas; border-top: 1px solid #8884; }
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ GOODCOIN print system
+   A restricted vintage ink palette. Cream / charcoal / ember are the primary combination. */
+@theme {
+  --color-paper: #e8d9b9;
+  --color-parchment: #d4c19b;
+  --color-charcoal: #24221e;
+  --color-ink: #24221e;
+  --color-red: #a93428;
+  --color-ember: #d66a32;
+  --color-burnt: #a84b27;
+  --color-mustard: #c29a48;
+  --color-forest: #46543d;
+  --color-paper-dim: #c9b893;
+
+  --font-display: var(--font-bebas), "Oswald", "Arial Narrow", sans-serif;
+  --font-sans: var(--font-archivo), "IBM Plex Sans", system-ui, sans-serif;
+  --font-serif: var(--font-baskerville), Georgia, serif;
+
+  --animate-flicker: flicker 3.2s ease-in-out infinite;
+  --animate-rise: rise 9s linear infinite;
+  --animate-reveal: reveal 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+
+  @keyframes flicker {
+    0%, 100% { transform: scaleY(1) skewX(0deg); }
+    30% { transform: scaleY(1.025) skewX(-0.6deg); }
+    60% { transform: scaleY(0.985) skewX(0.5deg); }
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 0.9; }
+    100% { transform: translateY(-220px) scale(0.4); opacity: 0; }
+  }
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(14px); clip-path: inset(0 0 12% 0); }
+    to { opacity: 1; transform: none; clip-path: inset(0); }
+  }
+}
+
+@layer base {
+  html { background: var(--color-paper); color: var(--color-ink); }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-paper);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--color-ember); color: var(--color-paper); }
+  :focus-visible { outline: 3px solid var(--color-ember); outline-offset: 3px; }
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+}
+
+@layer components {
+  /* Aged paper: a very light fractal-noise grain, never heavy enough to hurt reading. */
+  .paper {
+    background-color: var(--color-paper);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .13 0 0 0 0 .11 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .paper-dark {
+    background-color: var(--color-charcoal);
+    color: var(--color-paper);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .91 0 0 0 0 .85 0 0 0 0 .72 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .parchment { background-color: var(--color-parchment); }
+  /* Halftone dot field, used as a background layer behind art. */
+  .halftone {
+    background-image: radial-gradient(circle, rgb(36 34 30 / 0.22) 1.1px, transparent 1.4px);
+    background-size: 7px 7px;
+  }
+  .halftone-ember {
+    background-image: radial-gradient(circle, rgb(214 106 50 / 0.5) 1.3px, transparent 1.7px);
+    background-size: 8px 8px;
+  }
+  /* Constructivist sunburst. */
+  .rays {
+    background: repeating-conic-gradient(from 0deg at 50% 100%, rgb(169 52 40 / 0.18) 0deg 6deg, transparent 6deg 12deg);
+  }
+  /* Screen-print misregistration on display type. */
+  .misprint { text-shadow: 3px 2px 0 rgb(169 52 40 / 0.55); }
+  .misprint-paper { text-shadow: 3px 2px 0 rgb(214 106 50 / 0.6); }
+  .display {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.88;
+  }
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .rule-double { border-top: 3px double currentColor; }
+  .frame { border: 2px solid var(--color-ink); box-shadow: 6px 6px 0 var(--color-ink); }
+  .frame-ember { border: 2px solid var(--color-ink); box-shadow: 6px 6px 0 var(--color-ember); }
+  .num { font-variant-numeric: tabular-nums; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }

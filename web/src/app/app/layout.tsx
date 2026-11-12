@@ -1,11 +1,8 @@
-import { AppBottomNav, AppSidebar } from "@/components/app/AppNav";
+import type { Metadata } from "next";
+import { AppShell } from "@/components/site/AppShell";
+
+export const metadata: Metadata = { title: { default: "The Fire", template: "%s · GOODCOIN App" } };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="app-shell">
-      <AppSidebar />
-      <div>{children}</div>
-      <AppBottomNav />
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }
