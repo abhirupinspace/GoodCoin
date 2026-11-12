@@ -20,7 +20,7 @@ Holders can **kindle**: in a fire's final moments, burn GOOD to rescue it when i
 |---|---|
 | Track | Memecoins With Mechanics (`memecoins`) · also Social Money (`social`): causes are Sputnik DAO treasuries |
 | Network | NEAR testnet · both contracts locked (no access keys) |
-| Demo contract (6-minute fires, goal 4) | [`goodfire-demo2-ab92.testnet`](https://testnet.nearblocks.io/address/goodfire-demo2-ab92.testnet) |
+| Demo contract (6-minute fires, goal 4) | [`goodfire-demo4-ab92.testnet`](https://testnet.nearblocks.io/address/goodfire-demo4-ab92.testnet) |
 | Production-parameter contract (7-day fires, goal 10) | [`goodfire-prod-ab92.testnet`](https://testnet.nearblocks.io/address/goodfire-prod-ab92.testnet) |
 | Causes (demo DAOs) | [`gf-ab92-oss.sputnik-v2.testnet`](https://testnet.nearblocks.io/address/gf-ab92-oss.sputnik-v2.testnet), [`gf-ab92-climate.sputnik-v2.testnet`](https://testnet.nearblocks.io/address/gf-ab92-climate.sputnik-v2.testnet) |
 | License | MIT |
@@ -72,7 +72,7 @@ GOOD already held, so bringing more people raises your own floor.
 Read-only, no wallet needed:
 
 ```sh
-C=goodfire-demo2-ab92.testnet
+C=goodfire-demo4-ab92.testnet
 near account list-keys $C network-config testnet now                                    # → no keys
 near contract call-function as-read-only $C current_fire json-args '{}' network-config testnet now
 near contract call-function as-read-only $C get_hearth json-args '{}' network-config testnet now
@@ -106,22 +106,20 @@ The E2E run goes through every rule and asserts chain state after each step:
 
 ## Live run on testnet (2026-11-13)
 
-`deploy/e2e.sh` against the locked demo contract `goodfire-demo2-ab92.testnet` (0 access keys). Every
-step asserted chain state; `check_invariants()` was all true at the end.
+`deploy/e2e.sh` ran uninterrupted against the freshly deployed, locked demo contract
+`goodfire-demo4-ab92.testnet` (0 access keys). Every step asserted chain state, and
+`check_invariants()` was all true at the end.
 
 | Step | Result | Transaction |
 |---|---|---|
-| Fire 0: 4 givers, bob sparked by alice | caught; 104,000 GOOD earmarked; a quarter of bob's first-gift weight moved to alice | [settle](https://testnet.nearblocks.io/txns/JDSgZu4tCBC7RWjpcgy7gxjtkgoS6YBh22AcVK3pY4Q8) |
-| Payout of fire 0 | 1.17 NEAR to the open-source DAO | [payout](https://testnet.nearblocks.io/txns/GaMu9J87siKUD622Bshf98brTmxXVvWxs9Ep4ohHMfkr) |
-| Claims | alice 82,000 GOOD, bob 6,000 GOOD | [alice](https://testnet.nearblocks.io/txns/DqTFZ4VfN5fZS2B2XAJ9NVMnTwcJmB5NMY62DTJxigom), [bob](https://testnet.nearblocks.io/txns/FgXgucTWyqEbpdCDafhMG7Z5PTft3JUgNRLHtqTeSNX8) |
-| Fire 1: 5 givers; cause account deleted | caught; payout failed → cause dead forever, NEAR carried | [payout](https://testnet.nearblocks.io/txns/9MDEgYJV5pUdKUjWrPK7eZtFy6nFciWfE1aBAA5Sqb19) |
-| Fire 2: 1 giver | smothered; max supply 1,000,000,000 → 997,500,357.7 GOOD; refund claimed | [settle](https://testnet.nearblocks.io/txns/F24WZZQpFE6PMHkLyA7e9hzLWXJ4EnXdUNmNryEtdNm2), [refund](https://testnet.nearblocks.io/txns/HrxkTtLqSkTjZ611aShsX6AD7u7zZukPBZNv57mnx4a1) |
-| Fire 3: 4 of 5 givers, last 30 s | alice kindled (≈ 9,687 GOOD burned), goal 5 → 4, fire caught | [kindle](https://testnet.nearblocks.io/txns/HJQKjHo5cYkr6UiCbzghHfoNsh5W8mD6xSq5JesgZ4h4), [settle](https://testnet.nearblocks.io/txns/FjTwKFCaym8r3QYuUEM31tr4AFimqN4iRv8Kjp8kvuv2) |
-| Payout of fire 3 | paid to the next live cause, draining fire 1's carried NEAR | [payout](https://testnet.nearblocks.io/txns/6MfVsappLp3zj5Zs62gSuEJ1CGxBffSCtQFdi1jwc82n) |
-| Redeem 10,000 GOOD | NEAR at the floor; floor unchanged | [redeem](https://testnet.nearblocks.io/txns/FtTCBeMWdannHiidSLbgtvPFzNna9iPbGvBYTANd1vhC) |
-
-The run was resumed once at fire 3 after one demo account ran out of gas money; the contract state
-was unaffected.
+| Fire 0: 4 givers, bob sparked by alice | caught; 104,000 GOOD earmarked; a quarter of bob's first-gift weight moved to alice | [settle](https://testnet.nearblocks.io/txns/E4jyHEZhT4snXoqMsE4F1G23jK8pFj78e2cXwjZVdqyc) |
+| Payout of fire 0 | 1.17 NEAR to the open-source DAO | [payout](https://testnet.nearblocks.io/txns/4tiSzqzMeknWRJjbfpRCbR7jpbVmyNxWdrcY7FEbxCfi) |
+| Claims | alice 82,000 GOOD, bob 6,000 GOOD | [alice](https://testnet.nearblocks.io/txns/AbutxyTDMxdqiv5VutytmwcrV5uJEND3wJAU3BoSGvxS), [bob](https://testnet.nearblocks.io/txns/D32uENcUC8gjX943iYaKB4SBBJpAP6fE8PdJB9766wmF) |
+| Fire 1: 5 givers; cause account deleted | caught; payout failed → cause dead forever, NEAR carried | [payout](https://testnet.nearblocks.io/txns/HEy6kmvVRuSFRzjbkEXC4stBwcQiy7UgHKrrkzgwLFSU) |
+| Fire 2: 1 giver | smothered; max supply 1,000,000,000 → 997,500,357.7 GOOD; refund claimed | [settle](https://testnet.nearblocks.io/txns/C8tTyrkNYdWXs4PKeQvHHrbXj8ERtubGzUp6Ymm63fVR), [refund](https://testnet.nearblocks.io/txns/ExnVC9Tc7zpMiXYwucm9rQgnNYX9BtePuhTqEPAVFwug) |
+| Fire 3: 4 of 5 givers, rescue window | alice kindled, goal 5 → 4, fire caught | [kindle](https://testnet.nearblocks.io/txns/3NqERyhSxKYGdWKD5GQszjNji8WSns9HwVxrUNRXWcaP), [settle](https://testnet.nearblocks.io/txns/HfKfcM1eiLycbAYiyJhmJAEhaTvMwBBR2zEyZNzLaWa) |
+| Payout of fire 3 | paid to the next live cause, draining fire 1's carried NEAR | [payout](https://testnet.nearblocks.io/txns/6AmGn73bF4dcNP3JsVZ9KZcpMwxMQN7BWHuj8hM4nvqX) |
+| Redeem 10,000 GOOD | NEAR at the floor; floor unchanged | [redeem](https://testnet.nearblocks.io/txns/7AKCgbcYgwZzxTabbUJXUDUKFMbdF21JpvNhmavHsdHJ) |
 
 ## Contract interface
 
