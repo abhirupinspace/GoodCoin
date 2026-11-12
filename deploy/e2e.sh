@@ -42,7 +42,7 @@ call() { # call <signer> <method> <json> <deposit-yocto> [allow-fail]
 now_ns() { jv get_stats '{}' .now_ns; }
 wait_until() { # wait_until <ns> <label>
   while :; do local n; n=$(now_ns); (( n >= $1 )) && break
-    local left=$(( ($1 - n) / 1000000000 + 1 )); printf '\r   waiting %4ss for %s ' "$left" "$2"; sleep $(( left > 10 ? 10 : left )); done; echo
+    local left=$(( ($1 - n) / 1000000000 + 1 )); printf '\r   waiting %4ss for %s ' "$left" "$2"; sleep $(( left > 10 ? 10 : (left > 2 ? left - 1 : 1) )); done; echo
 }
 must() { [[ "$1" == "$2" ]] || { echo "ASSERTION FAILED: $3 (got '$1', want '$2')"; echo "- **ASSERTION FAILED:** $3 (got $1, want $2)" >> "$LOG"; exit 1; }; note "✔ $3"; }
 end_of() { jv get_fire "{\"week\":\"$1\"}" .end_ns; }
@@ -101,9 +101,10 @@ log "Fire 3 — kindle rescue; payout drains the carry"
 must "$(jv current_fire '{}' .cause_account)" "gf-$(echo "$TEAM" | sed -E 's/gcteam-([a-z0-9]+)\.testnet/\1/')-oss.sputnik-v2.testnet" "rotation skips the dead cause"
 for who in bob carol dave erin; do give $who 3 "$GIFT"; done
 must "$(jv current_fire '{}' .goal)" "5" "4 of 5 givers"
-wait_until "$(( $(end_of 3) - 30000000000 ))" "rescue window of fire 3"
-note "kindle quote: $(jv kindle_quote '{"week":"3"}' .) GOOD base units"
+# The demo rescue window is the last 36 s of the fire: enter it as soon as it opens and kindle at once.
+wait_until "$(( $(end_of 3) - 34000000000 ))" "rescue window of fire 3"
 call "$(a alice)" kindle '{"week":"3"}' "0 NEAR"
+note "kindle burned: $(( $(jv get_supply '{}' .total_burned | cut -c1-10) )) (first 10 digits of total burned, GOOD base units)"
 must "$(jv current_fire '{}' .goal)" "4" "goal lowered to 4 by kindling"
 settle_after 3
 must "$(jv get_fire '{"week":"3"}' .outcome)" "Caught" "rescued fire 3 caught"
