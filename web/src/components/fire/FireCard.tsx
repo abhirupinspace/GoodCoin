@@ -4,8 +4,8 @@ import { dateFromNs, nearFmt } from "@/lib/format";
 import type { FireView } from "@/types/contract";
 
 /** Vintage campaign card for the Good Wall. */
-export function FireCard({ fire }: { fire: FireView }) {
-  const toCause = fire.outcome === "Caught" ? BigInt(fire.total) - (BigInt(fire.total) * 1000n) / 10000n : 0n;
+export function FireCard({ fire, feeBps = 1000 }: { fire: FireView; feeBps?: number }) {
+  const toCause = fire.outcome === "Caught" ? BigInt(fire.total) - (BigInt(fire.total) * BigInt(feeBps)) / 10000n : 0n;
   return (
     <Link href={`/good-wall/${fire.week}`} className="group frame block bg-paper p-5 transition-transform hover:-translate-y-1">
       <div className="flex items-start justify-between gap-3">

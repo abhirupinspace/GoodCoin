@@ -3,7 +3,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button, Notice, Term } from "@/components/ui";
 import { useTx } from "@/components/wallet/useTx";
-import { nearFmt, parseNear } from "@/lib/format";
+import { nearFmt, parseNear, units } from "@/lib/format";
 import { useConfig, useCurrentFire, useGift } from "@/lib/useQueries";
 
 /** Give to the current fire. week + cause come from current_fire; ?ref= pre-fills the spark. */
@@ -27,7 +27,7 @@ export function GiveForm() {
   const net = yocto ? BigInt(yocto) - (firstThisWeek ? fee : 0n) : 0n;
   const error = !touched ? null
     : !yocto ? "Enter an amount in NEAR."
-    : firstThisWeek && BigInt(yocto) <= fee ? "A first gift must be more than the 0.005 NEAR record fee."
+    : firstThisWeek && BigInt(yocto) <= fee ? `A first gift must be more than the ${nearFmt(fee.toString(), 3)} record fee.`
     : already + net < minGift ? `Your total this week must reach ${nearFmt(minGift.toString(), 2)}.`
     : null;
   const closed = f.outcome !== "Open" || f.settle_pending;
@@ -53,13 +53,13 @@ export function GiveForm() {
             aria-invalid={!!error} aria-describedby="amount-help"
             className="display num h-14 w-full border-2 border-ink bg-paper px-4 text-3xl outline-none focus:border-ember"
           />
-          <button type="button" className="eyebrow border-2 border-ink px-3 hover:bg-parchment" onClick={() => { setAmount((Number(suggested) / 1e24).toString()); setTouched(true); }}>
+          <button type="button" className="eyebrow border-2 border-ink px-3 hover:bg-parchment" onClick={() => { setAmount(units(suggested, 3).replace(/,/g, "")); setTouched(true); }}>
             Min
           </button>
         </div>
         <p id="amount-help" className="mt-2 text-sm text-ink/70">
           Minimum gift {nearFmt(minGift.toString(), 2)} per week.{" "}
-          {firstThisWeek ? <>Your first gift this week includes a <Term def="0.005 NEAR that pays for storing your gift on-chain. It is never refunded, even if the fire is smothered.">0.005 NEAR record fee</Term>.</> : <>You already gave {nearFmt(already.toString(), 2)} this week; top-ups pay no fee.</>}
+          {firstThisWeek ? <>Your first gift this week includes a <Term def={`${nearFmt(fee.toString(), 3)} that pays for storing your gift on-chain. It is never refunded, even if the fire is smothered.`}>{nearFmt(fee.toString(), 3)} record fee</Term>.</> : <>You already gave {nearFmt(already.toString(), 2)} this week; top-ups pay no fee.</>}
         </p>
         {error && <p className="mt-1 text-sm font-semibold text-red" role="alert">{error}</p>}
       </div>
@@ -70,7 +70,7 @@ export function GiveForm() {
         <p className="mt-1 text-xs text-ink/60">Counts only on your first-ever gift, and only if they gave earlier in this same fire. A quarter of your first gift's weight moves to them.</p>
       </div>
       <Notice title="What happens to your NEAR">
-        It waits in escrow until the week ends. If the fire catches, 90% goes to the cause and 10% to the Hearth, and you can claim GOOD. If it is smothered, you can claim your gift back (minus the record fee).
+        It waits in escrow until the week ends. If the fire catches, {100 - config.data.fee_bps / 100}% goes to the cause and {config.data.fee_bps / 100}% to the Hearth, and you can claim GOOD. If it is smothered, you can claim your gift back (minus the record fee).
       </Notice>
       <Button type="submit" size="lg" disabled={busy || closed} className="w-full">
         {closed ? "This fire is closed" : busy ? "Waiting for finality…" : accountId ? "Join the fire" : "Connect wallet to give"}

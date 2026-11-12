@@ -37,7 +37,7 @@ export function LiveFire({ light = false, compact = false }: { light?: boolean; 
           </a>
           {cause?.dead && <p className="mt-1 text-sm text-red">This cause's account no longer accepts payouts; its NEAR is carried to the next fire that catches.</p>}
         </div>
-        <OutcomeStamp outcome={f.outcome} />
+        <OutcomeStamp outcome={f.outcome} ended={left === 0} />
       </div>
 
       <div className="mt-6">

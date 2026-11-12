@@ -13,6 +13,12 @@ interface NBTxn {
 }
 const cache = new Map<string, { at: number; body: unknown }>();
 
+/** NearBlocks may return deposits as JSON numbers (lossy for yocto); never emit scientific notation. */
+function toYoctoString(v: number | string): string {
+  if (typeof v === "string") return v;
+  return v.toLocaleString("fullwide", { useGrouping: false, maximumFractionDigits: 0 });
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ account: string }> }) {
   const { account } = await params;
   if (!/^[a-z0-9._-]{2,64}$/.test(account)) return Response.json({ txns: [], error: "invalid account", stale: false }, { status: 400 });
@@ -32,7 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ account
         try { args = a?.args ? JSON.parse(a.args) : null; } catch { args = null; }
         return {
           hash: t.transaction_hash, signer: t.signer_account_id, receiver: t.receiver_account_id,
-          method: a?.method ?? a?.action ?? null, deposit: String(a?.deposit ?? t.actions_agg?.deposit ?? "0"),
+          method: a?.method ?? a?.action ?? null, deposit: toYoctoString(a?.deposit ?? t.actions_agg?.deposit ?? "0"),
           timestamp_ns: t.block_timestamp, success: t.outcomes?.status ?? null, args,
         };
       });

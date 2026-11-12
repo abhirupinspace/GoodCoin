@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/art";
 
 type Tone = "ember" | "dark" | "paper" | "outline" | "red";
@@ -49,9 +49,10 @@ export function Stamp({ children, tone = "red", className = "" }: { children: Re
   );
 }
 
-export function OutcomeStamp({ outcome }: { outcome: "Open" | "Caught" | "Smothered" }) {
+export function OutcomeStamp({ outcome, ended = false }: { outcome: "Open" | "Caught" | "Smothered"; ended?: boolean }) {
   if (outcome === "Caught") return <Stamp tone="forest">Caught</Stamp>;
   if (outcome === "Smothered") return <Stamp tone="red">Smothered</Stamp>;
+  if (ended) return <Stamp tone="ink">Ended · unsettled</Stamp>;
   return <Stamp tone="ember">Burning</Stamp>;
 }
 
@@ -85,6 +86,7 @@ export function Stat({ label, value, hint, light = false, big = false }: { label
 /** Inline term with an accessible definition popover (hover, focus or tap). */
 export function Term({ children, def }: { children: ReactNode; def: string }) {
   const [open, setOpen] = useState(false);
+  const id = useId();
   return (
     <span className="relative inline-block">
       <button
@@ -92,12 +94,12 @@ export function Term({ children, def }: { children: ReactNode; def: string }) {
         className="cursor-help border-b-2 border-dotted border-ember font-semibold"
         onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)} onBlur={() => setOpen(false)} onClick={() => setOpen((o) => !o)}
-        aria-describedby={open ? "term-tip" : undefined}
+        aria-describedby={open ? id : undefined}
       >
         {children}
       </button>
       {open && (
-        <span id="term-tip" role="tooltip" className="frame absolute left-0 top-full z-40 mt-2 block w-72 bg-paper p-3 text-left font-sans text-sm font-normal normal-case tracking-normal text-ink">
+        <span id={id} role="tooltip" className="frame absolute left-0 top-full z-40 mt-2 block w-72 bg-paper p-3 text-left font-sans text-sm font-normal normal-case tracking-normal text-ink">
           {def}
         </span>
       )}
@@ -138,14 +140,17 @@ export function Notice({ tone = "info", title, children }: { tone?: "info" | "er
 }
 
 export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
   return (
     <button
       type="button"
-      onClick={async () => { await navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 1800); }}
+      onClick={async () => {
+        try { await navigator.clipboard.writeText(text); setState("done"); } catch { setState("failed"); }
+        setTimeout(() => setState("idle"), 2200);
+      }}
       className="eyebrow h-10 border-2 border-ink px-4 hover:bg-charcoal hover:text-paper"
     >
-      {done ? "Copied ✓" : label}
+      {state === "done" ? "Copied ✓" : state === "failed" ? "Copy failed — select manually" : label}
     </button>
   );
 }

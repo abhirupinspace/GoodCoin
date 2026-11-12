@@ -32,7 +32,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ push, update }}>
       {children}
-      <div aria-live="polite" className="fixed bottom-4 right-4 z-[60] flex w-[min(92vw,380px)] flex-col gap-3">
+      <div aria-live="polite" className="fixed bottom-20 right-4 z-[60] lg:bottom-4 flex w-[min(92vw,380px)] flex-col gap-3">
         {toasts.map((t) => (
           <div key={t.id} role="status" className={`frame ${tone[t.kind]} p-4`}>
             <div className="flex items-start justify-between gap-3">

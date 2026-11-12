@@ -41,7 +41,7 @@ export default function Home() {
               Make good <span className="text-red">contagious.</span>
             </h1>
             <p className="display mt-6 text-3xl text-burnt sm:text-4xl">One cause. One community. One fire every week.</p>
-            <p className="mt-5 max-w-xl font-serif text-lg leading-relaxed text-ink/80">
+            <p className="mt-5 max-w-xl bg-paper/90 p-4 font-serif text-lg leading-relaxed text-ink/85 shadow-[4px_4px_0_rgba(36,34,30,0.85)]">
               Memecoins coordinate millions of people to buy. GOODCOIN coordinates them to give together — a community-powered experiment that turns individual contributions into collective public-good funding.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -51,7 +51,7 @@ export default function Home() {
           </div>
           <div className="relative flex items-end justify-center">
             <Embers />
-            <MonumentalFlame className="relative z-10 h-[420px] w-auto drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] md:h-[560px]" />
+            <MonumentalFlame className="relative z-10 h-[300px] w-auto drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] sm:h-[420px] md:h-[560px]" />
             <Seal className="absolute right-0 top-4 hidden w-36 rotate-12 md:block" />
           </div>
         </div>
