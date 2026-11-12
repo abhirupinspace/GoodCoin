@@ -659,12 +659,11 @@ mod prop {
                     }
                     Op::Kindle(a) if behind == 0 => {
                         let w = c.current_week();
-                        if let Some(q) = c.kindle_quote(U64(w)) {
-                            if c.good_balance(&acc(&name(a))) >= q.0 {
+                        if let Some(q) = c.kindle_quote(U64(w))
+                            && c.good_balance(&acc(&name(a))) >= q.0 {
                                 ctx(&name(a), t, 0);
                                 c.kindle(U64(w));
                             }
-                        }
                     }
                     _ => {}
                 }
