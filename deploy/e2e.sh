@@ -4,7 +4,7 @@
 #
 # usage: deploy/e2e.sh <demo-contract> <team-account>
 # Expects a fresh demo deployment (deploy/deploy.sh demo ...) and funded accounts
-# alice..jane + ghost under <team-account> in ~/.near-credentials.
+# alice..jane + ghost under <team-account> in ~/.near-credentials (≥ 0.5 NEAR each, alice ≥ 1.6).
 #
 # Fire 0  cause oss      alice 1 NEAR, bob (sparked by alice), carol, dave → CATCHES, payout Paid, claims
 # Fire 1  cause ghost    5 givers → CATCHES; ghost account deleted → payout fails → cause dead, carried
@@ -29,7 +29,7 @@ view() { near contract call-function as-read-only "$C" "$1" json-args "$2" netwo
 jv() { view "$1" "$2" | jq -r "$3"; }
 call() { # call <signer> <method> <json> <deposit-yocto> [allow-fail]
   local out tx
-  out=$(near contract call-function as-transaction "$C" "$2" json-args "$3" prepaid-gas '150.0 Tgas' \
+  out=$(near contract call-function as-transaction "$C" "$2" json-args "$3" prepaid-gas '80.0 Tgas' \
     attached-deposit "$4" sign-as "$1" network-config $NET sign-with-legacy-keychain send 2>&1 || true)
   tx=$(echo "$out" | grep -oE "Transaction ID: [A-Za-z0-9]+" | head -1 | awk '{print $3}')
   if echo "$out" | grep -q "Smart contract panicked"; then
