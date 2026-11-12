@@ -3,7 +3,7 @@
 
 usage: make_config.py production|demo <team-account> <suffix>
 
-production: 7-day fires, 1 NEAR minimum gift, goal 20 (SPEC §9).
+production: 7-day fires, 1 NEAR minimum gift, goal 10 (simulator-chosen: cold-start catch ≈ 71%).
 demo:       same code, 6-minute fires, 0.1 NEAR minimum gift, goal 4, labeled "demo" on-chain,
             plus a deletable "ghost" cause used by deploy/e2e.sh to demonstrate dead-cause failover.
 Causes are Sputnik DAO treasuries created through sputnik-v2.testnet (testnet placeholders).
@@ -32,7 +32,7 @@ def config(kind: str, team: str, suffix: str) -> dict:
     }
     if kind == "production":
         return {**common, "label": "production", "week_ns": str(7 * 86_400 * SEC),
-                "min_gift": str(ONE), "goal_start": 20, "goal_min": 5, "goal_max": 10_000,
+                "min_gift": str(ONE), "goal_start": 10, "goal_min": 5, "goal_max": 5_000,
                 "causes": [oss, climate]}
     if kind == "demo":
         ghost = {"account": f"ghost.{team}", "name": "Failover test cause (deleted during the E2E run)",

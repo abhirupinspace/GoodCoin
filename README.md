@@ -1,202 +1,139 @@
-# GOODCOIN — Make Good Contagious
+# GOODCOIN
 
-**A NEP-141 memecoin on NEAR whose supply reacts to the community doing good together.**
-Track: **Memecoins With Mechanics** (`memecoins`) · NEAR HACKATHON 2026 · testnet · MIT
+**Make good contagious.**
 
-Each 7-day epoch the community must reach **both** ≥ 100 peer-verified good deeds **and** ≥ 50 unique
-participants.
+Memecoins coordinate millions of people… to buy. GOODCOIN coordinates them to **give together**.
 
-- **Hit both →** every counted participant can claim GOOD (25 × a streak multiplier, up to 50), 1,000
-  GOOD of the public-goods treasury unlocks for community proposals, and the streak — the meme's
-  high score — grows.
-- **Miss either →** nothing is minted, the streak resets to 0, and **0.1% of the locked treasury burns**.
+A memecoin on NEAR with three rules:
 
-The rules live entirely in one Rust contract with **no admin key**: every parameter is fixed at launch
-and readable on-chain, epochs are derived from block time, and anyone can settle them.
+1. **Give together.** Every week there is one fire for one public good. If enough givers throw NEAR in
+   before the week ends, the fire **catches**: 90% goes to the cause's DAO treasury, 10% to the
+   **Hearth**. If not, every gift is refunded and that week's GOOD can never exist: max supply shrinks.
+2. **Get GOOD.** Givers of a fire that catches receive new GOOD, backed by the Hearth. Anyone can redeem
+   GOOD for its share of the Hearth (the **floor**) at any time. The floor **never goes down**, and every
+   later fire that catches raises it.
+3. **Bring a friend.** A first-time giver who names you passes a quarter of their first share to you.
+
+Holders can **kindle**: in a fire's final moments, burn GOOD to rescue it when it's a giver short.
 
 | | |
 |---|---|
-| Demo contract (minutes-long epochs, labeled `demo`) | [`goodcoin-demo-530a20.testnet`](https://testnet.nearblocks.io/address/goodcoin-demo-530a20.testnet) |
-| Production-parameter contract (7-day epochs, labeled `production`) | [`goodcoin-530a20.testnet`](https://testnet.nearblocks.io/address/goodcoin-530a20.testnet) |
-| Repository | https://github.com/abhirupinspace/GoodCoin |
-| Web app | `web/` — run locally (see below) |
-| Demo video / post | _added at submission_ |
+| Track | Memecoins With Mechanics (`memecoins`) · also Social Money (`social`): causes are Sputnik DAO treasuries |
+| Network | NEAR testnet · both contracts locked (no access keys) |
+| Demo contract (6-minute fires, goal 4) | [`goodfire-demo2-ab92.testnet`](https://testnet.nearblocks.io/address/goodfire-demo2-ab92.testnet) |
+| Production-parameter contract (7-day fires, goal 10) | [`goodfire-prod-ab92.testnet`](https://testnet.nearblocks.io/address/goodfire-prod-ab92.testnet) |
+| Causes (demo DAOs) | [`gf-ab92-oss.sputnik-v2.testnet`](https://testnet.nearblocks.io/address/gf-ab92-oss.sputnik-v2.testnet), [`gf-ab92-climate.sputnik-v2.testnet`](https://testnet.nearblocks.io/address/gf-ab92-climate.sputnik-v2.testnet) |
+| License | MIT |
 
-> Accounts are not humans. GOODCOIN does **not** solve Sybil resistance; it makes farming cost real
-> accounts, real attestations and public exposure, and states its limits plainly in
-> [docs/SECURITY.md](docs/SECURITY.md).
-
----
-
-## 1. Why a memecoin is the right tool
-
-Memecoins already coordinate huge groups around a shared joke. Usually the only "mechanic" is price.
-GOODCOIN gives the joke rules: the community has a **shared streak** it can only keep alive by doing
-verifiable good things together, and a **visible cost** when it fails (the commons burns). Nobody earns
-by holding; rewards go only to accounts whose deeds were approved by three independent attestors in a
-week the whole community succeeded.
-
-## 2. How it works (Proof of Good)
+## How a week works
 
 ```
-Do good ─► Submit proof ─► 3 independent attestations ─► 24h dispute window ─► counts toward the epoch
-                                                                                     │
-                     epoch ends + 24h ─► anyone calls settle_epochs ◄────────────────┘
-                         │                                  │
-            both targets met                       a target missed
-   streak+1 · rewards earmarked                streak = 0 · 0.1% of locked
-   1,000 GOOD treasury unlock                  treasury burned (ft_burn)
-            │
-   each participant calls claim_reward ─► GOOD minted (ft_mint) from the 400M reserve
+ givers ──NEAR──► fire (escrow) ── goal: N distinct givers ──► week ends · anyone settles
+                                              │
+                    ┌─────────────────────────┴──────────────────────┐
+              enough givers: CATCHES                        too few: SMOTHERED
+              90% → cause DAO (payout)                       every gift refunded
+              10% → Hearth                                   that week's GOOD never exists
+              GOOD to givers                                 (max supply ↓ forever)
+              floor ↑ for every holder                       goal eases ×1/1.1
+              goal grows ×1.1 (unless rescued by a kindle)
 ```
 
-| Mechanic | Rule (all on-chain, immutable) |
+**Floor = Hearth NEAR ÷ backed GOOD.** Each new GOOD is paid for with at least 1.25× the floor out of
+the givers' 10%, so a catch raises the floor; redeeming leaves it unchanged; burning raises it. The
+contract asserts after every state change that the floor never decreased, and `check_invariants()`
+lets anyone verify it on-chain.
+
+GOOD is therefore a share of every future fire: each later catch adds part of its fee to the backing of
+GOOD already held, so bringing more people raises your own floor.
+
+## Why it holds up
+
+| Property | How |
 |---|---|
-| Epoch | `epoch(t) = (t − genesis) / 7 days`; no admin creates epochs |
-| Success | `approved_deeds ≥ 100 AND participants ≥ 50` |
-| Reward | `25 GOOD × (1 + 12.5% × min(streak, 8))` per participant — breaking the streak drops everyone back to 25 |
-| Failure | streak → 0, burn 0.1% of each locked treasury bucket |
-| Verification | 3 distinct attestors (reviewer pool or verified contributors), no self-attestation; disputes resolved by a separate reviewer quorum |
-| Treasury | 250M in 3 buckets (community 50% / environment 30% / education & OSS 20%); spendable only via one-account-one-vote proposals with quorum, threshold and caps |
-| Supply | cap 1B on cumulative mint; genesis mints only the 250M treasury; 400M reward reserve + 350M vesting are unminted counters; `S(t) = S(0) + M(t) − B(t)` |
+| Nothing lost by trying | assurance contract: NEAR leaves only if the goal is met (a 0.005 NEAR record fee pays for storage) |
+| No free GOOD, even for a dishonest cause | new GOOD costs ≥ 1.25× the floor, so recycled gifts buy nothing cheap |
+| Sybil attacks fund public goods | each fake giver costs ≥ `min_gift`, 90% of which reaches the cause; the spark bounty moves weight from the newcomer, so fake friends earn nothing |
+| Fair launch | zero premine, zero team allocation; one locked 1-NEAR seed that nobody owns |
+| No admin | parameters fixed at deploy, causes rotate in a fixed order, no owner / setter / upgrade method, all keys deleted |
+| No oracle, no judges | the good is an on-chain NEAR transfer to a curated DAO; the contract checks it |
+| Robust payouts | `Due → Sending → Paid / Carried`; a payout to a deleted cause is carried to the next catch; if every cause dies, carried NEAR becomes refundable |
 
-Full spec: [docs/DESIGN.md](docs/DESIGN.md) · every decision with rationale: [docs/DECISIONS.md](docs/DECISIONS.md) ·
-method-by-method reference: [docs/CONTRACT.md](docs/CONTRACT.md).
+**Honest limits.**
+- A cause colluding with its insiders can fake participation, though it can never get cheap GOOD.
+- Accounts are not people.
+- At the floor, a giver's GOOD is worth about 8–9% of the gift on day one. It's a donation with a receipt that appreciates.
+- A smother destroys GOOD that was never minted.
+- The chain proves a transfer to a curated account, not the good that was done.
+- Testnet causes are team-controlled demo DAOs.
 
-## 3. Why NEAR
+## Verify it yourself
 
-- **Named accounts + sub-accounts**: reviewers, organizers and vesting beneficiaries are human-readable
-  accounts fixed in the config (`r0.goodcoin-team-….testnet`), so who can do what is legible on-chain.
-- **Lockable contract accounts**: deleting every full-access key makes the contract provably immutable
-  — the "no admin can change the rules" property is checkable by anyone with `near account list-keys`.
-- **NEP-141 + NEP-297 events**: rewards and burns are standard `ft_mint` / `ft_burn` events any
-  explorer or wallet understands; protocol events (`epoch_settled`, `deed_approved`, …) use the same
-  standard.
-- **Storage staking**: callers pay for exactly the bytes they create, so the contract cannot be filled
-  for free.
-- **Cheap, fast finality**: per-person claims and three-person attestations are practical.
-
-## 4. Try it (judges: "do X → see Y")
-
-### 4a. Read live state — no wallet, no install beyond near-cli
+Read-only, no wallet needed:
 
 ```sh
-C=goodcoin-demo-530a20.testnet
-near contract call-function as-read-only $C get_stats json-args '{}' network-config testnet now
-# → current_streak, longest_streak, successful/failed epochs, current epoch window, next reward
-near contract call-function as-read-only $C get_supply json-args '{}' network-config testnet now
-# → max/total/circulating supply, minted, burned, reserve remaining, earmarked, unvested
+C=goodfire-demo2-ab92.testnet
+near account list-keys $C network-config testnet now                                    # → no keys
+near contract call-function as-read-only $C current_fire json-args '{}' network-config testnet now
+near contract call-function as-read-only $C get_hearth json-args '{}' network-config testnet now
 near contract call-function as-read-only $C check_invariants json-args '{}' network-config testnet now
-# → {"supply_equation":true,"under_cap":true,"allocations_accounted":true,"treasury_backed":true}
-near contract call-function as-read-only $C list_activity json-args '{}' network-config testnet now
-# → every genesis mint, reward mint, treasury unlock, failure burn and disbursement
-near account list-keys $C network-config testnet now
-# → no full-access keys once locked (see §7)
+near contract call-function as-read-only $C list_fires json-args '{"from":"0"}' network-config testnet now
+near contract call-function as-read-only $C fire_card json-args '{"week":"0"}' network-config testnet now
 ```
 
-### 4b. Run the tests (≈ 1 min)
+Tests:
 
 ```sh
-cd contract && cargo test                       # 58 unit tests: token, challenges, verification, disputes, epochs, treasury, vesting, invariants
-cd ../sim && uv run pytest && uv run python -m goodsim   # simulator tests + regenerate sim/out/*
+cd contract && cargo test        # every rule, error and invariant, the golden trace, and a property test
+cd sim && uv run pytest && uv run python -m goodsim     # exact Python reference model + economics
 ```
 
-### 4c. Watch the whole loop happen on testnet (≈ 15 min, mostly waiting for epochs)
-
-Requires funded testnet accounts in `~/.near-credentials` (see §6). The script asserts on chain state
-after every step and prints each transaction ID:
+Live end-to-end on testnet (about 25 minutes; needs funded accounts in `~/.near-credentials`):
 
 ```sh
-./deploy/demo_e2e.sh goodcoin-demo-530a20.testnet goodcoin-team-530a20.testnet
+./deploy/deploy.sh demo <contract>.testnet <team>.testnet <suffix> --lock
+./deploy/e2e.sh <contract>.testnet <team>.testnet
 ```
 
-| Step | You see |
-|---|---|
-| 1 | organizer creates + publishes a challenge → phase `Active` |
-| 2–3 | alice/bob/carol submit deeds; r0–r2 attest → epoch shows 3/3 deeds, 3/3 participants |
-| 4 | after epoch end + dispute window, anyone settles → `Succeeded`, streak 1 |
-| 5 | participants claim → `ft_mint` 25 GOOD each, supply rises |
-| 6 | alice proposes, bob+carol vote, anyone finalizes → `ft_transfer` from treasury to beneficiary |
-| 7 | dave's deed is approved, then disputed by r3 and overturned by r4+r5 → `Rejected`, uncounted |
-| 8 | next epoch misses targets → `Failed`, streak 0, longest stays 1, `ft_burn` 0.1% of locked treasury |
-| 9 | `check_invariants` → all true |
+The E2E run goes through every rule and asserts chain state after each step:
+1. a fire catches, with a spark;
+2. a cause account is deleted, so its payout is carried;
+3. a fire smothers;
+4. a fire is rescued by a kindle;
+5. the carry drains into the next payout;
+6. GOOD is redeemed at the floor;
+7. every invariant is checked.
 
-### 4d. Use the web app
+## Contract interface
 
-```sh
-cd web && pnpm install && pnpm dev    # http://localhost:3000, defaults to the demo contract
-```
+| Method | Who | What |
+|---|---|---|
+| `give(week, cause, sparked_by?)` | anyone | throw NEAR into the current fire (`week` and `cause` must match) |
+| `settle()` | anyone | settle up to 16 ended fires (state only) |
+| `payout(week)` | anyone | pay a caught fire's 90% (+ carry) to its cause |
+| `claim(weeks)` | givers | GOOD shares of caught fires; NEAR refunds of smothered fires |
+| `kindle(week)` | holders | burn GOOD to lower the goal by one in the rescue window |
+| `redeem(amount)` | holders | burn GOOD for its share of the Hearth |
+| `close(week)` | anyone | 52 weeks after a catch, cancel its unclaimed GOOD |
+| `report(week, uri, sha256)` | the paid cause | publish what the gift funded |
+| views | anyone | `current_fire`, `get_fire`, `list_fires`, `get_hearth`, `get_supply`, `get_stats`, `get_account`, `get_gift`, `get_causes`, `kindle_quote`, `fire_card`, `check_invariants`, NEP-141/145/148 |
 
-Overview (streak, live epoch progress, supply, invariants) → Challenges → Submit (hash a local file
-or fetch-and-hash a URL) → Verify (attest, dispute, re-hash evidence) → Treasury (vote, finalize) →
-Activity (every mint/burn with tx links) → Leaderboard → Epochs → About (all parameters).
-Connect a testnet wallet to act. See [web/README.md](web/README.md).
+Events: NEP-297 standard `goodcoin`, plus NEP-141 `ft_mint` / `ft_burn`.
+- `fire_gift`, `fire_caught`, `fire_smothered`
+- `payout`, `cause_dead`, `extinguished`
+- `kindled`, `redeemed`, `claimed_good`, `claimed_near`, `closed`, `report`
 
-## 5. Economics (60-day simulation, done before choosing parameters)
-
-`uv run python -m goodsim` — 2,000 Monte Carlo runs per scenario, deterministic seed; model mirrors the
-contract rules. Full method, assumptions, charts and adversarial cases: [docs/SIMULATION.md](docs/SIMULATION.md).
-
-| 60 days, policy B (chosen) | optimistic | base | pessimistic |
-|---|---:|---:|---:|
-| Successful epochs of 8 (MC mean) | 7.40 | 4.30 | 0.04 |
-| Rewards minted (GOOD) | 23,433 | 8,211 | 60 |
-| Burned (GOOD) | 150,585 | 923,747 | 1,982,711 |
-| Final supply excl. vesting | 249.87M | 249.08M | 248.02M |
-
-What we learned and did **not** hide:
-- One failed epoch burns ~250,000 GOOD — ~91–182× what a success mints. The coin is net-deflationary
-  unless the community keeps succeeding; supply moves < 1% in 60 days.
-- The spec's assumed 8/6/2 successes are not reproducible at those means for any dispersion; we report
-  the distribution instead of tuning it.
-- Bigger rewards would raise the Sybil payoff proportionally, so we kept the spec values and added the
-  capped streak multiplier (makes the streak economically real; caps per-account payoff at 50 GOOD/epoch).
-
-![supply](sim/out/1_supply.png)
-
-## 6. Build & deploy yourself
-
-Prereqs: Rust (toolchain pinned to 1.95.0 by `contract/rust-toolchain.toml`), `cargo-near` 0.23,
-`near-cli-rs` 0.31, Python 3 + `uv`, Node 20 + pnpm.
-
-```sh
-cd contract && cargo near build non-reproducible-wasm      # → target/near/goodcoin.wasm
-# testnet accounts (faucet, free):
-near account create-account sponsor-by-faucet-service <team>.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
-near account create-account sponsor-by-faucet-service <contract>.testnet autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
-for n in org r0 r1 r2 r3 r4 r5 alice bob carol dave liquidity ecosystem contributors security; do
-  near account create-account fund-myself $n.<team>.testnet '0.25 NEAR' autogenerate-new-keypair save-to-legacy-keychain \
-    sign-as <team>.testnet network-config testnet sign-with-legacy-keychain send
-done
-./deploy/deploy.sh demo <contract>.testnet <team>.testnet --lock        # or: production
-```
-
-`deploy/make_config.py` holds both parameter sets; `--lock` deletes all full-access keys after init.
-
-## 7. Immutability, security, limitations
-
-- No owner, no setters, no upgrade method; all parameters via `get_config`.
-- Deployed contracts are locked by deleting every full-access key (`deploy/deploy.sh --lock`), after
-  which nobody — including the team — can change code or parameters.
-- 21-item risk register, Sybil analysis and the honest limitations list: [docs/SECURITY.md](docs/SECURITY.md).
-- Real-world impact is not provable on-chain: the contract proves attestations and transfers, not deeds.
-
-## 8. Repository map
+## Repository
 
 ```
-contract/   Rust NEAR contract (lib, token, deeds, verify, epoch, treasury, vesting, views, events, tests)
-sim/        Python 60-day tokenomics simulator (+ tests, generated charts in sim/out/)
-web/        Next.js app (App Router, Tailwind, near-api-js + near-connect)
-deploy/     make_config.py (production/demo params), deploy.sh (deploy+init+lock), demo_e2e.sh (live E2E)
-docs/       DESIGN, DECISIONS, CONTRACT, SECURITY, SIMULATION
+contract/  Rust NEAR contract (near-sdk 5.30): fire, payout, claims, hearth, kindle, token, views, math
+sim/       Python: exact integer reference model of the protocol + economic simulation
+tests/     golden trace replayed by both the simulator and the contract tests
+deploy/    make_config.py (demo / production), deploy.sh (deploy + seed + lock), e2e.sh (live run)
 ```
 
-## 9. Libraries, prior work and AI assistance
+## Libraries and AI assistance
 
-- Built entirely during NEAR HACKATHON (2026-11-11 → 2026-11-14). No pre-existing project code.
-- Rust: `near-sdk` 5.30.1, `near-contract-standards` 5.30.1 (FungibleToken, StorageManagement, metadata, events).
-- Python: numpy, matplotlib, pytest (via uv). Web: Next.js, React, Tailwind CSS, TanStack Query,
-  `near-api-js`, `@hot-labs/near-connect` (exact versions in `web/package.json`).
-- **AI assistance**: designed and written with Claude Code (Anthropic) under human direction, including
-  the contract, tests, simulator, web app and documentation. All tests and the live E2E were run, not
-  assumed.
+Rust `near-sdk` / `near-contract-standards` 5.30.1, `uint`, `proptest`; Python numpy, matplotlib,
+pytest. Designed and written with AI assistance (Claude Code) under human direction, as the hackathon
+rules require us to disclose.
