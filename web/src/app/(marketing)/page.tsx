@@ -34,22 +34,20 @@ export default function Home() {
       {/* HERO ------------------------------------------------------------ */}
       <section className="relative overflow-hidden border-b-[3px] border-ink">
         <div className="halftone absolute inset-0 opacity-25" aria-hidden />
-        <div className="relative mx-auto flex max-w-7xl items-center px-4 pt-12 sm:px-6 lg:min-h-[min(820px,calc(100svh-4rem))] lg:pt-0">
-          <div className="relative z-10 max-w-xl pb-8 lg:max-w-[30rem] lg:pb-0 lg:pt-6">
-            <p className="eyebrow text-burnt">A movement on NEAR</p>
-            <h1 className="display misprint mt-4 text-[clamp(4.5rem,10vw,7.75rem)] text-ink">
-              Make good <span className="text-red">contagious.</span>
-            </h1>
-            <p className="display mt-6 text-3xl leading-tight text-burnt sm:text-4xl">One cause. One community.<br />One fire every week.</p>
-            <p className="mt-5 max-w-sm font-serif text-xl leading-snug text-ink/80">Memecoins get people to buy. GOODCOIN gets them to give together.</p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Button href="/app" size="lg">Join this week&apos;s fire</Button>
-              <Button href="/how-it-works" size="lg" tone="paper" className="border-2 border-ink">How it works</Button>
-            </div>
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 pt-14 text-center sm:px-6 lg:pt-20">
+          <p className="eyebrow text-burnt">A movement on NEAR</p>
+          <h1 className="display misprint mt-4 text-[clamp(4.25rem,11vw,9rem)] text-ink">
+            Make good <span className="text-red">contagious.</span>
+          </h1>
+          <p className="display mt-6 text-3xl leading-tight text-burnt sm:text-4xl">One cause. One community. One fire every week.</p>
+          <p className="mt-4 max-w-md font-serif text-xl leading-snug text-ink/80">Memecoins get people to buy. GOODCOIN gets them to give together.</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button href="/app" size="lg">Join this week&apos;s fire</Button>
+            <Button href="/how-it-works" size="lg" tone="paper" className="border-2 border-ink">How it works</Button>
           </div>
         </div>
-        {/* Hero artwork: a torch-bearing crowd. Decorative; anchored to the bottom-right from 1024px, stacked below the copy on smaller screens. */}
-        <div className="relative aspect-[16/9] w-full lg:absolute lg:bottom-0 lg:right-0 lg:w-[66%] xl:w-[68%]">
+        {/* Hero artwork: a torch-bearing crowd, centred beneath the copy. Decorative. */}
+        <div className="relative mx-auto mt-6 aspect-[16/9] w-full max-w-5xl lg:mt-2">
           <Embers />
           <Image
             src="/art1hero.png"
@@ -57,7 +55,7 @@ export default function Home() {
             aria-hidden
             fill
             priority
-            sizes="(min-width: 1024px) 68vw, 100vw"
+            sizes="(min-width: 1024px) 1024px, 100vw"
             className="object-contain object-bottom"
           />
         </div>

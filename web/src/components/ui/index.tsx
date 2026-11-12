@@ -63,7 +63,7 @@ export function SectionHead({ no, eyebrow, title, intro, light = false, classNam
     <header className={`max-w-3xl ${className}`}>
       {(no || eyebrow) && (
         <p className={`eyebrow mb-3 ${light ? "text-mustard" : "text-burnt"}`}>
-          {no && <span className="mr-3">{no} —</span>}
+          {no && <span className="mr-3">{no}</span>}
           {eyebrow}
         </p>
       )}
