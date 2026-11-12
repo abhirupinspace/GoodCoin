@@ -11,19 +11,19 @@ const PRINCIPLES = [
   {
     no: "01",
     title: "Give together",
-    body: "Every week there is one fire for one public good. Throw NEAR in. It waits in escrow. If enough distinct givers join before the week ends, the fire catches. If not, every gift comes back — and that week's GOOD can never exist.",
+    body: "One fire a week for one public good. Throw NEAR in. If enough people join, it catches. If not, everyone gets their gift back.",
     art: <Crowd count={7} className="h-40 w-full" />,
   },
   {
     no: "02",
     title: "Get GOOD",
-    body: "When a fire catches, 90% goes to the cause's DAO and 10% to the Hearth. The givers receive new GOOD — paid for at more than the backing floor, so every catch raises the floor for everyone already holding.",
+    body: "When a fire catches, 90% goes to the cause and 10% to the Hearth. Givers receive new GOOD, and every catch raises the floor for everyone holding it.",
     art: <MonumentalFlame className="mx-auto h-48" />,
   },
   {
     no: "03",
     title: "Bring a friend",
-    body: "Good spreads person to person. When someone gives for the first time in a fire you already gave to, and names you, a quarter of their first share passes to you. Fake friends earn nothing — the bounty comes out of the newcomer's own share.",
+    body: "Bring someone new into a fire you joined. A quarter of their first share passes to you.",
     art: <HandsEmber className="h-44 w-full" />,
   },
 ];
@@ -34,24 +34,22 @@ export default function Home() {
       {/* HERO ------------------------------------------------------------ */}
       <section className="relative overflow-hidden border-b-[3px] border-ink">
         <div className="halftone absolute inset-0 opacity-25" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:min-h-[min(860px,calc(100svh-4rem))] lg:pt-16">
-          <div className="relative z-10 max-w-xl pb-6 lg:max-w-[33rem] lg:pb-24">
-            <p className="eyebrow text-burnt">A movement on NEAR · since fire №0</p>
-            <h1 className="display misprint mt-4 text-[clamp(4.5rem,11vw,8.25rem)] text-ink">
+        <div className="relative mx-auto flex max-w-7xl items-center px-4 pt-12 sm:px-6 lg:min-h-[min(820px,calc(100svh-4rem))] lg:pt-0">
+          <div className="relative z-10 max-w-xl pb-8 lg:max-w-[30rem] lg:pb-0 lg:pt-6">
+            <p className="eyebrow text-burnt">A movement on NEAR</p>
+            <h1 className="display misprint mt-4 text-[clamp(4.5rem,10vw,7.75rem)] text-ink">
               Make good <span className="text-red">contagious.</span>
             </h1>
-            <p className="display mt-5 text-3xl text-burnt sm:text-4xl">One cause. One community. One fire every week.</p>
-            <p className="mt-5 bg-paper/90 p-4 font-serif text-lg leading-relaxed text-ink/85 shadow-[4px_4px_0_rgba(36,34,30,0.85)]">
-              Memecoins coordinate millions of people to buy. GOODCOIN coordinates them to give together — a community-powered experiment that turns individual contributions into collective public-good funding.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <p className="display mt-6 text-3xl leading-tight text-burnt sm:text-4xl">One cause. One community.<br />One fire every week.</p>
+            <p className="mt-5 max-w-sm font-serif text-xl leading-snug text-ink/80">Memecoins get people to buy. GOODCOIN gets them to give together.</p>
+            <div className="mt-9 flex flex-wrap gap-3">
               <Button href="/app" size="lg">Join this week&apos;s fire</Button>
               <Button href="/how-it-works" size="lg" tone="paper" className="border-2 border-ink">How it works</Button>
             </div>
           </div>
         </div>
         {/* Hero artwork: a torch-bearing crowd. Decorative; anchored to the bottom-right from 1024px, stacked below the copy on smaller screens. */}
-        <div className="relative aspect-[16/9] w-full lg:absolute lg:bottom-0 lg:right-0 lg:w-[62%] xl:w-[64%]">
+        <div className="relative aspect-[16/9] w-full lg:absolute lg:bottom-0 lg:right-0 lg:w-[66%] xl:w-[68%]">
           <Embers />
           <Image
             src="/art1hero.png"
@@ -59,7 +57,7 @@ export default function Home() {
             aria-hidden
             fill
             priority
-            sizes="(min-width: 1024px) 64vw, 100vw"
+            sizes="(min-width: 1024px) 68vw, 100vw"
             className="object-contain object-bottom"
           />
         </div>
@@ -117,7 +115,7 @@ export default function Home() {
           <HearthArt className="mx-auto w-full max-w-md" />
           <div>
             <SectionHead no="The Hearth" title="Every fire leaves something behind." intro={
-              <p>A tenth of every fire that catches goes into the Hearth, and the Hearth backs GOOD. Anyone can swap GOOD back for its share of the Hearth at any time — the backing floor. New GOOD is always paid for above that floor, so the floor never goes down.</p>
+              <p>A tenth of every fire that catches goes into the Hearth. The Hearth backs GOOD, and the floor never goes down.</p>
             } />
             <div className="mt-10"><HearthNumbers /></div>
             <p className="mt-6 border-l-4 border-red pl-4 text-sm font-semibold text-ink/80">
