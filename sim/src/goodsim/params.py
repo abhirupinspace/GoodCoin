@@ -1,79 +1,27 @@
-"""Immutable parameters. Values mirror the contract `Config` (DESIGN.md §3-5, DECISIONS.md)."""
+"""Protocol presets (SPEC §9) and Monte Carlo settings."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import replace
 
-BUCKETS = ("community", "environment", "education")
+from .protocol import NEAR, Config
 
+DAY_NS = 86_400 * 10**9
 
-@dataclass(frozen=True)
-class Vesting:
-    name: str
-    amount: float
-    cliff_days: int
-    duration_days: int
-
-    def vested(self, day: float) -> float:
-        """Cumulative vested at `day` (linear from genesis; nothing before cliff)."""
-        if day < self.cliff_days:
-            return 0.0
-        return self.amount * min(day, self.duration_days) / self.duration_days
-
-
-VESTING = (
-    Vesting("liquidity", 150e6, 0, 365),
-    Vesting("ecosystem", 100e6, 0, 730),
-    Vesting("contributors", 50e6, 182, 730),
-    Vesting("security", 50e6, 0, 730),
+PROD = Config(
+    W=7 * DAY_NS, min_gift=NEAR, record_fee=5 * NEAR // 1000, G0=20, Gmin=5, Gmax=10_000,
+    causes=("c0.near", "c1.near", "c2.near", "c3.near"),
 )
 
 
-@dataclass(frozen=True)
-class Params:
-    max_supply: float = 1e9
-    treasury_genesis: float = 250e6
-    treasury_split: tuple = (0.5, 0.3, 0.2)
-    reserve: float = 400e6
-    vesting: tuple = field(default=VESTING)
-    epoch_days: int = 7
-    dispute_days: int = 1
-    deeds_target: int = 100
-    participants_target: int = 50
-    base_reward: float = 25.0
-    streak_step: float = 0.125  # +12.5% per streak epoch (policy B)
-    streak_cap: int = 8  # max multiplier 1 + 0.125*8 = 2.0
-    reward_multiplier: float = 1.0  # stress-test knob only (1.0 = spec)
-    unlock_per_success: float = 1_000.0
-    burn_bps: int = 10  # 0.1% of locked treasury per failed epoch
-    reserve_share_bps: float = 1.0  # policy C: 0.01% of reserve_remaining per success
-    spend_rate: float = 0.5  # fraction of spendable paid out by proposals at each settlement
-    claim_rate: float = 1.0  # fraction of earmarked rewards claimed (minted) at settlement
-
-    def settle_day(self, epoch: int) -> int:
-        """Day on which epoch N can first be settled: end of epoch + dispute window."""
-        return self.epoch_days * (epoch + 1) + self.dispute_days
-
-    def epochs_settled_by(self, day: int) -> int:
-        """Number of epochs settled on or before `day`."""
-        n = 0
-        while self.settle_day(n) <= day:
-            n += 1
-        return n
-
-    def with_(self, **kw) -> "Params":
-        return replace(self, **kw)
+def cfg_with(base: Config = PROD, **kw) -> Config:
+    return replace(base, **kw)
 
 
-SPEC = Params()
-HORIZON_DAYS = 60
-MC_RUNS = 2_000
-SEED = 20261111
-DISPERSION_K = 10.0  # NegBin dispersion; assumption, see SIMULATION.md (sensitivity reported)
+SEED = 20261113
+RUNS = 48            # Monte Carlo paths per scenario
+SWEEP_RUNS = 8       # paths per sweep cell
+COLD_RUNS = 2000     # fire-0 trials per G0 value
+HORIZON = 260        # weeks (5 years)
 
-# Weekly means given by spec (approved deeds, unique participants).
-SCENARIOS_SPEC = {
-    "optimistic": (180.0, 90.0),
-    "base": (110.0, 55.0),
-    "pessimistic": (45.0, 25.0),
-}
-SPEC_STATED_SUCCESSES = {"optimistic": 8, "base": 6, "pessimistic": 2}
+# Recommended by this simulator (see sim/out/REPORT.md): G0 lowered for cold start, Gmax so |e| <= 70.
+REC = cfg_with(G0=10, Gmin=5, Gmax=5_000)
