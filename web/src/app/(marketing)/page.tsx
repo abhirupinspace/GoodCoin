@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Crowd, Embers, FieldLines, HandsEmber, HearthArt, KindleArt, MonumentalFlame, Ornament, Seal, Sunburst } from "@/components/art";
+import { Crowd, Embers, FieldLines, HandsEmber, HearthArt, KindleArt, MonumentalFlame, Ornament, Sunburst } from "@/components/art";
 import { HomeGoodWall } from "@/components/home/HomeGoodWall";
 import { LiveFire } from "@/components/fire/LiveFire";
 import { HearthNumbers } from "@/components/hearth/HearthNumbers";
@@ -32,30 +33,36 @@ export default function Home() {
     <>
       {/* HERO ------------------------------------------------------------ */}
       <section className="relative overflow-hidden border-b-[3px] border-ink">
-        <Sunburst className="absolute inset-0 h-full w-full" opacity={0.55} />
-        <div className="halftone absolute inset-0 opacity-40" aria-hidden />
-        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-0 pt-12 sm:px-6 md:grid-cols-[1.15fr_0.85fr] md:pt-20">
-          <div className="relative z-10 pb-10 md:pb-24">
+        <div className="halftone absolute inset-0 opacity-25" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:min-h-[min(860px,calc(100svh-4rem))] lg:pt-16">
+          <div className="relative z-10 max-w-xl pb-6 lg:max-w-[33rem] lg:pb-24">
             <p className="eyebrow text-burnt">A movement on NEAR · since fire №0</p>
-            <h1 className="display misprint mt-4 text-[clamp(4.5rem,13vw,11rem)] text-ink">
+            <h1 className="display misprint mt-4 text-[clamp(4.5rem,11vw,8.25rem)] text-ink">
               Make good <span className="text-red">contagious.</span>
             </h1>
-            <p className="display mt-6 text-3xl text-burnt sm:text-4xl">One cause. One community. One fire every week.</p>
-            <p className="mt-5 max-w-xl bg-paper/90 p-4 font-serif text-lg leading-relaxed text-ink/85 shadow-[4px_4px_0_rgba(36,34,30,0.85)]">
+            <p className="display mt-5 text-3xl text-burnt sm:text-4xl">One cause. One community. One fire every week.</p>
+            <p className="mt-5 bg-paper/90 p-4 font-serif text-lg leading-relaxed text-ink/85 shadow-[4px_4px_0_rgba(36,34,30,0.85)]">
               Memecoins coordinate millions of people to buy. GOODCOIN coordinates them to give together — a community-powered experiment that turns individual contributions into collective public-good funding.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button href="/app" size="lg">Join this week&apos;s fire</Button>
-              <Button href="/how-it-works" size="lg" tone="outline">How it works</Button>
+              <Button href="/how-it-works" size="lg" tone="paper" className="border-2 border-ink">How it works</Button>
             </div>
           </div>
-          <div className="relative flex items-end justify-center">
-            <Embers />
-            <MonumentalFlame className="relative z-10 h-[300px] w-auto drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] sm:h-[420px] md:h-[560px]" />
-            <Seal className="absolute right-0 top-4 hidden w-36 rotate-12 md:block" />
-          </div>
         </div>
-        <Crowd className="relative -mt-2 h-28 w-full sm:h-40" />
+        {/* Hero artwork: a torch-bearing crowd. Decorative; anchored to the bottom-right from 1024px, stacked below the copy on smaller screens. */}
+        <div className="relative aspect-[16/9] w-full lg:absolute lg:bottom-0 lg:right-0 lg:w-[62%] xl:w-[64%]">
+          <Embers />
+          <Image
+            src="/art1hero.png"
+            alt=""
+            aria-hidden
+            fill
+            priority
+            sizes="(min-width: 1024px) 64vw, 100vw"
+            className="object-contain object-bottom"
+          />
+        </div>
       </section>
 
       {/* THE WEEKLY FIRE ---------------------------------------------------- */}
