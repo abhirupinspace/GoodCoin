@@ -24,6 +24,8 @@ pub mod types;
 pub mod views;
 
 #[cfg(test)]
+mod golden;
+#[cfg(test)]
 mod tests;
 
 use near_contract_standards::fungible_token::FungibleToken;
