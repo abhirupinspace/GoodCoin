@@ -59,10 +59,10 @@ must "$(jv current_fire '{}' .week)" "0" "fresh deployment: current fire is 0"
 must "$(jv current_fire '{}' .goal)" "4" "fire 0 goal is 4"
 
 log "Fire 0 — give together, with a spark"
-give alice 0 $BIG
-give bob 0 $GIFT alice
-give carol 0 $GIFT
-give dave 0 $GIFT
+give alice 0 "$BIG"
+give bob 0 "$GIFT" alice
+give carol 0 "$GIFT"
+give dave 0 "$GIFT"
 must "$(jv current_fire '{}' .givers)" "4" "4 givers / goal 4"
 must "$(jv get_gift '{"week":"0","account_id":"'"$(a alice)"'"}' .weight)" "1025000000000000000000000" "a quarter of bob's first gift moved to alice's weight"
 settle_after 0
@@ -77,7 +77,7 @@ must "$(jv ft_balance_of '{"account_id":"'"$(a bob)"'"}' .)" "600000000000000000
 
 log "Fire 1 — a cause disappears; its payout is carried"
 must "$(jv current_fire '{}' .goal)" "5" "goal grew to 5 after an unkindled catch"
-for who in erin frank gina hank ivan; do give $who 1 $GIFT; done
+for who in erin frank gina hank ivan; do give $who 1 "$GIFT"; done
 must "$(jv current_fire '{}' .cause_account)" "$(a ghost)" "fire 1 burns for the ghost cause"
 near account delete-account "$(a ghost)" beneficiary "$TEAM" network-config $NET sign-with-legacy-keychain send >/dev/null 2>&1 && note "ghost cause account deleted"
 settle_after 1
@@ -89,7 +89,7 @@ must "$(jv get_causes '{}' '.[1].dead')" "true" "ghost cause marked dead forever
 
 log "Fire 2 — too few givers: smothered"
 MAX0=$(jv get_supply '{}' .max_supply)
-give jane 2 $GIFT
+give jane 2 "$GIFT"
 settle_after 2
 must "$(jv get_fire '{"week":"2"}' .outcome)" "Smothered" "fire 2 smothered"
 MAX1=$(jv get_supply '{}' .max_supply)
@@ -99,7 +99,7 @@ call "$(a jane)" claim '{"weeks":["2"]}' "0 NEAR"
 
 log "Fire 3 — kindle rescue; payout drains the carry"
 must "$(jv current_fire '{}' .cause_account)" "gf-$(echo "$TEAM" | sed -E 's/gcteam-([a-z0-9]+)\.testnet/\1/')-oss.sputnik-v2.testnet" "rotation skips the dead cause"
-for who in bob carol dave erin; do give $who 3 $GIFT; done
+for who in bob carol dave erin; do give $who 3 "$GIFT"; done
 must "$(jv current_fire '{}' .goal)" "5" "4 of 5 givers"
 wait_until "$(( $(end_of 3) - 30000000000 ))" "rescue window of fire 3"
 note "kindle quote: $(jv kindle_quote '{"week":"3"}' .) GOOD base units"
