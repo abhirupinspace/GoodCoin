@@ -1,950 +1,677 @@
-//! Unit tests (spec §16). Time is controlled with `VMContextBuilder::block_timestamp`.
+//! Unit tests: one per SPEC clause, plus a property test over random histories.
+//! Time is driven with `VMContextBuilder::block_timestamp`; promise callbacks are called directly.
 use near_contract_standards::fungible_token::core::FungibleTokenCore;
-use near_contract_standards::fungible_token::metadata::FungibleTokenMetadataProvider;
 use near_sdk::json_types::{U64, U128};
 use near_sdk::test_utils::VMContextBuilder;
-use near_sdk::{AccountId, NearToken, testing_env};
+use near_sdk::{AccountId, NearToken, PromiseError, testing_env};
 
 use crate::Contract;
 use crate::types::*;
 
-const SEC: u64 = 1_000_000_000;
-const DAY: u64 = 86_400 * SEC;
-const EPOCH: u64 = 7 * DAY;
-const T0: u64 = 1_700_000_000 * SEC;
+pub(crate) const SEC: u64 = 1_000_000_000;
+pub(crate) const W: u64 = 360 * SEC;
+pub(crate) const T0: u64 = 1_800_000_000 * SEC;
+pub(crate) const MIN: u128 = ONE_NEAR / 10;
+pub(crate) const FEE: u128 = 5 * ONE_NEAR / 1000;
 
-fn acc(s: &str) -> AccountId {
+pub(crate) fn acc(s: &str) -> AccountId {
     s.parse().unwrap()
 }
-fn contract_id() -> AccountId {
-    acc("good.near")
-}
-fn reviewers() -> Vec<AccountId> {
-    (0..6).map(|i| acc(&format!("r{i}.near"))).collect()
-}
-fn good(n: u128) -> u128 {
-    n * ONE_GOOD
+pub(crate) fn me() -> AccountId {
+    acc("goodcoin.near")
 }
 
-fn ctx(who: &AccountId, t: u64) {
+pub(crate) fn ctx(who: &str, t: u64, deposit: u128) {
     let mut b = VMContextBuilder::new();
-    b.current_account_id(contract_id())
-        .predecessor_account_id(who.clone())
-        .signer_account_id(who.clone())
-        .block_timestamp(t)
-        .attached_deposit(NearToken::from_near(1))
-        .account_balance(NearToken::from_near(100));
-    testing_env!(b.build());
-}
-fn ctx_no_deposit(who: &AccountId, t: u64) {
-    let mut b = VMContextBuilder::new();
-    b.current_account_id(contract_id())
-        .predecessor_account_id(who.clone())
-        .block_timestamp(t)
-        .attached_deposit(NearToken::from_yoctonear(0));
-    testing_env!(b.build());
-}
-fn ctx_1yocto(who: &AccountId, t: u64) {
-    let mut b = VMContextBuilder::new();
-    b.current_account_id(contract_id())
-        .predecessor_account_id(who.clone())
-        .block_timestamp(t)
-        .attached_deposit(NearToken::from_yoctonear(1));
+    b.current_account_id(me())
+        .predecessor_account_id(acc(who))
+        .signer_account_id(acc(who))
+        .block_timestamp(T0 + t)
+        .attached_deposit(NearToken::from_yoctonear(deposit))
+        .account_balance(NearToken::from_near(1_000));
     testing_env!(b.build());
 }
 
-fn config() -> Config {
-    let y = 365 * DAY;
+fn now_rel() -> u64 {
+    Contract::now() - T0
+}
+
+pub(crate) fn demo_config(causes: &[&str]) -> Config {
     Config {
-        label: "test".into(),
-        epoch_duration_ns: U64(EPOCH),
-        deeds_target: 2,
-        participants_target: 2,
-        base_reward: U128(good(25)),
-        streak_bonus_bps: 1_250,
-        streak_bonus_cap: 8,
-        pg_unlock_per_success: U128(good(1_000)),
-        failure_burn_bps: 10,
-        min_attestations: 3,
-        dispute_window_ns: U64(DAY),
-        dispute_quorum: 2,
-        reviewer_pool: reviewers(),
-        organizers: vec![acc("org.near")],
-        vesting: vec![
-            VestingSchedule { name: "liquidity".into(), beneficiary: acc("liq.near"), total: U128(good(150_000_000)), cliff_ns: U64(0), duration_ns: U64(y) },
-            VestingSchedule { name: "ecosystem".into(), beneficiary: acc("eco.near"), total: U128(good(100_000_000)), cliff_ns: U64(0), duration_ns: U64(2 * y) },
-            VestingSchedule { name: "contributors".into(), beneficiary: acc("team.near"), total: U128(good(50_000_000)), cliff_ns: U64(182 * DAY), duration_ns: U64(2 * y) },
-            VestingSchedule { name: "security".into(), beneficiary: acc("sec.near"), total: U128(good(50_000_000)), cliff_ns: U64(0), duration_ns: U64(2 * y) },
-        ],
-        gov: GovConfig {
-            quorum: 2,
-            threshold_bps: 6_000,
-            max_per_proposal: U128(good(500)),
-            max_per_epoch: U128(good(800)),
-            min_voting_ns: U64(DAY),
-            max_voting_ns: U64(EPOCH),
-        },
-        limits: RateLimits { submissions_per_epoch: 5, attestations_per_epoch: 50, disputes_per_epoch: 3 },
+        label: "demo".into(),
+        week_ns: U64(W),
+        min_gift: U128(MIN),
+        record_fee: U128(FEE),
+        fee_bps: 1000,
+        markup_bps: 2500,
+        bounty_bps: 2500,
+        allowance_bps: 25,
+        seed_good: U128(1_000_000 * ONE_GOOD),
+        goal_start: 4,
+        goal_min: 2,
+        goal_max: 100,
+        causes: causes
+            .iter()
+            .map(|c| CauseInput { account: acc(c), name: format!("Cause {c}"), uri: "https://example.org".into() })
+            .collect(),
     }
 }
 
-fn setup_with(cfg: Config) -> Contract {
-    ctx(&acc("deployer.near"), T0);
-    Contract::new(cfg, None)
-}
-fn setup() -> Contract {
-    setup_with(config())
+pub(crate) fn setup(causes: &[&str]) -> Contract {
+    ctx("deployer.near", 0, ONE_NEAR);
+    // testing_env! carries storage over; start every contract from empty storage.
+    near_sdk::mock::with_mocked_blockchain(|b| {
+        b.take_storage();
+    });
+    Contract::new(demo_config(causes))
 }
 
-fn challenge_input(start: u64, end: u64, verify: u64) -> ChallengeInput {
-    ChallengeInput {
-        name: "Teach a skill".into(),
-        description: "Help someone learn something".into(),
-        kind: ChallengeKind::Digital,
-        category: "education".into(),
-        instructions: "Teach, then link a public write-up".into(),
-        evidence_requirements: "Public link".into(),
-        eligibility: "Anyone".into(),
-        open_to: OpenTo::Anyone,
-        start_ns: U64(start),
-        end_ns: U64(end),
-        verification_deadline_ns: U64(verify),
-        max_approved: 100,
-        target_participants: 10,
-        target_approved: 10,
+pub(crate) fn give(c: &mut Contract, who: &str, t: u64, attached: u128, spark: Option<&str>) {
+    ctx(who, t, attached);
+    let week = c.current_week();
+    let cause = c.projected_cause(week);
+    c.give(U64(week), cause, spark.map(acc));
+}
+
+pub(crate) fn settle(c: &mut Contract, t: u64) -> u32 {
+    ctx("anyone.near", t, 0);
+    c.settle()
+}
+
+/// Resolve a payout of `week` (Due → payout(); then the callback with `ok`).
+pub(crate) fn resolve(c: &mut Contract, week: u64, ok: bool) {
+    if c.fires.get(&week).unwrap().payout == PayoutStatus::Due {
+        ctx("anyone.near", now_rel(), 0);
+        c.payout(U64(week));
+    }
+    if c.fires.get(&week).unwrap().payout == PayoutStatus::Sending {
+        ctx("goodcoin.near", now_rel(), 0);
+        c.on_payout(U64(week), if ok { Ok(()) } else { Err(PromiseError::Failed) });
     }
 }
 
-/// Published challenge covering the first 10 epochs.
-fn with_challenge(c: &mut Contract) -> u32 {
-    ctx(&acc("org.near"), T0);
-    let id = c.create_challenge(challenge_input(T0, T0 + 10 * EPOCH, T0 + 11 * EPOCH));
-    c.publish_challenge(id);
-    id
+pub(crate) fn claim(c: &mut Contract, who: &str, weeks: &[u64]) -> (u128, u128) {
+    ctx(who, now_rel(), ONE_NEAR / 100);
+    let r = c.claim(weeks.iter().map(|&w| U64(w)).collect());
+    (r.good.0, r.near.0)
 }
 
-fn hash(n: u64) -> String {
-    format!("{:064x}", n)
-}
-
-fn submit(c: &mut Contract, ch: u32, who: &str, t: u64, n: u64) -> U64 {
-    ctx(&acc(who), t);
-    c.submit_deed(ch, hash(n), format!("https://example.org/{n}"), "did good".into())
-}
-
-fn approve(c: &mut Contract, sid: U64, t: u64) {
-    for r in reviewers().iter().take(3) {
-        ctx(r, t);
-        c.attest(sid, true);
-    }
-}
-
-/// `n` distinct accounts each get one approved deed in the epoch containing `t`.
-fn successful_epoch(c: &mut Contract, ch: u32, t: u64, tag: &str, n: usize, seed: u64) {
-    for i in 0..n {
-        let sid = submit(c, ch, &format!("{tag}{i}.near"), t, seed + i as u64);
-        approve(c, sid, t);
-    }
-}
-
-fn settle(c: &mut Contract, t: u64) -> u32 {
-    ctx(&acc("anyone.near"), t);
-    c.settle_epochs()
-}
-
-fn assert_invariants(c: &Contract) {
+pub(crate) fn assert_inv(c: &Contract) {
     let i = c.check_invariants();
-    assert!(i.supply_equation && i.under_cap && i.allocations_accounted && i.treasury_backed);
+    assert!(i.within_cap, "within_cap");
+    assert!(i.supply_equation, "supply_equation");
+    assert!(i.floor_never_decreased, "floor");
 }
 
-// ------------------------------------------------------------------ token & supply
-
-#[test]
-fn genesis_allocation() {
-    let c = setup();
-    let s = c.get_supply();
-    assert_eq!(s.total_supply.0, TREASURY_ALLOCATION);
-    assert_eq!(s.total_minted.0, TREASURY_ALLOCATION);
-    assert_eq!(s.reserve_remaining.0, REWARD_RESERVE);
-    assert_eq!(s.unvested.0, VESTED_ALLOCATION);
-    assert_eq!(s.circulating.0, 0);
-    assert_eq!(c.ft_balance_of(contract_id()).0, TREASURY_ALLOCATION);
-    let t = c.get_treasury();
-    assert_eq!(t[0].1.locked.0, good(125_000_000));
-    assert_eq!(t[1].1.locked.0, good(75_000_000));
-    assert_eq!(t[2].1.locked.0, good(50_000_000));
-    let m = c.ft_metadata();
-    assert_eq!((m.symbol.as_str(), m.decimals), ("GOOD", 24));
-    assert_invariants(&c);
+/// Fire 0: alice 1 NEAR, bob 0.1 sparked by alice, carol 0.1, dave 0.1 → caught.
+pub(crate) fn fire0_caught(c: &mut Contract) {
+    give(c, "alice.near", 10 * SEC, ONE_NEAR + FEE, None);
+    give(c, "bob.near", 20 * SEC, MIN + FEE, Some("alice.near"));
+    give(c, "carol.near", 30 * SEC, MIN + FEE, None);
+    give(c, "dave.near", 40 * SEC, MIN + FEE, None);
+    settle(c, W + SEC);
 }
 
+// ------------------------------------------------------------------ init
+
 #[test]
-#[should_panic(expected = "vesting totals must equal 350M GOOD")]
-fn config_rejects_bad_vesting_total() {
-    let mut cfg = config();
-    cfg.vesting[0].total = U128(good(1));
-    setup_with(cfg);
+fn init_seed_pin_and_bounds() {
+    let c = setup(&["c0.near", "c1.near"]);
+    assert_eq!(c.hearth, ONE_NEAR);
+    assert_eq!(c.backed(), 1_000_000 * ONE_GOOD);
+    assert_eq!((c.pin.base_goal, c.pin.cause), (4, 0));
+    assert_eq!(c.pin.allowance.0, 2_500_000 * ONE_GOOD);
+    assert_eq!((c.e_min, c.e_max), (-7, 33));
+    assert_eq!(c.ft_total_supply().0, 0);
+    assert_inv(&c);
 }
 
 #[test]
-#[should_panic(expected = "reviewer_pool must be")]
-fn config_requires_resolvable_disputes() {
-    let mut cfg = config();
-    cfg.reviewer_pool.truncate(5);
-    setup_with(cfg);
+#[should_panic(expected = "causes must be named accounts")]
+fn init_rejects_implicit_cause() {
+    setup(&["0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]);
 }
 
 #[test]
-fn vesting_linear_cliff_and_cap() {
-    let mut c = setup();
-    ctx(&acc("liq.near"), T0 + 365 * DAY / 2);
-    let half = c.claim_vested(0).0;
-    assert_eq!(half, good(75_000_000));
-    ctx(&acc("liq.near"), T0 + 10 * 365 * DAY);
-    assert_eq!(c.claim_vested(0).0, good(75_000_000));
-    assert_eq!(c.get_vesting()[0].claimed.0, good(150_000_000));
-    assert_invariants(&c);
+#[should_panic(expected = "duplicate cause")]
+fn init_rejects_duplicate_cause() {
+    setup(&["c0.near", "c0.near"]);
+}
+
+// ------------------------------------------------------------------ give
+
+#[test]
+fn give_records_fee_weight_and_givers() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", SEC, ONE_NEAR + FEE, None);
+    give(&mut c, "alice.near", 2 * SEC, MIN, None); // top-up: no fee, same giver
+    let f = c.fires.get(&0).unwrap().clone();
+    assert_eq!(f.givers, 1);
+    assert_eq!(f.total.0, ONE_NEAR + MIN);
+    assert_eq!(c.escrow_open, ONE_NEAR + MIN);
 }
 
 #[test]
-#[should_panic(expected = "nothing vested to claim")]
-fn vesting_cliff_blocks_early_claim() {
-    let mut c = setup();
-    ctx(&acc("team.near"), T0 + 100 * DAY);
-    c.claim_vested(2);
+#[should_panic(expected = "WRONG_WEEK")]
+fn give_wrong_week() {
+    let mut c = setup(&["c0.near"]);
+    ctx("alice.near", SEC, MIN + FEE);
+    c.give(U64(1), 0, None);
 }
 
 #[test]
-#[should_panic(expected = "only the beneficiary")]
-fn vesting_only_beneficiary() {
-    let mut c = setup();
-    ctx(&acc("mallory.near"), T0 + 100 * DAY);
-    c.claim_vested(0);
+#[should_panic(expected = "WRONG_CAUSE")]
+fn give_wrong_cause() {
+    let mut c = setup(&["c0.near", "c1.near"]);
+    ctx("alice.near", SEC, MIN + FEE);
+    c.give(U64(0), 1, None);
 }
 
 #[test]
-#[should_panic(expected = "nothing vested to claim")]
-fn vesting_cannot_double_claim() {
-    let mut c = setup();
-    ctx(&acc("liq.near"), T0 + 400 * DAY);
-    c.claim_vested(0);
-    c.claim_vested(0);
+#[should_panic(expected = "BELOW_MIN_GIFT")]
+fn give_below_min() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", SEC, MIN, None);
 }
 
 #[test]
-fn reward_transfer_works() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 2, 0);
-    settle(&mut c, T0 + EPOCH + DAY);
-    ctx(&acc("u0.near"), T0 + EPOCH + DAY);
-    c.claim_reward(U64(0));
-    ctx(&acc("u1.near"), T0 + EPOCH + DAY);
-    c.claim_reward(U64(0));
-    ctx_1yocto(&acc("u0.near"), T0 + EPOCH + DAY);
-    c.ft_transfer(acc("u1.near"), U128(good(5)), None);
-    assert_eq!(c.ft_balance_of(acc("u0.near")).0, good(20));
-    assert_eq!(c.ft_balance_of(acc("u1.near")).0, good(30));
-    assert_eq!(c.get_supply().circulating.0, good(50));
-    assert_invariants(&c);
-}
-
-// ------------------------------------------------------------------ challenges & submissions
-
-#[test]
-#[should_panic(expected = "only configured organizers")]
-fn only_organizers_create_challenges() {
-    let mut c = setup();
-    ctx(&acc("mallory.near"), T0);
-    c.create_challenge(challenge_input(T0, T0 + EPOCH, T0 + EPOCH));
+#[should_panic(expected = "CAUSE_CANNOT_GIVE")]
+fn cause_cannot_give() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "c0.near", SEC, ONE_NEAR, None);
 }
 
 #[test]
-#[should_panic(expected = "published challenges are immutable")]
-fn published_challenge_is_frozen() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    ctx(&acc("org.near"), T0);
-    c.update_challenge(ch, challenge_input(T0, T0 + 2 * EPOCH, T0 + 2 * EPOCH));
+#[should_panic(expected = "SETTLE_FIRST")]
+fn give_reverts_when_far_behind() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", 17 * W + SEC, ONE_NEAR, None);
 }
 
 #[test]
-#[should_panic(expected = "challenge not published")]
-fn draft_rejects_submissions() {
-    let mut c = setup();
-    ctx(&acc("org.near"), T0);
-    let ch = c.create_challenge(challenge_input(T0, T0 + EPOCH, T0 + EPOCH));
-    submit(&mut c, ch, "u.near", T0 + 1, 1);
+fn settle_catches_up_in_batches() {
+    let mut c = setup(&["c0.near"]);
+    assert_eq!(settle(&mut c, 40 * W + SEC), 16);
+    assert_eq!(settle(&mut c, 40 * W + SEC), 16);
+    assert_eq!(settle(&mut c, 40 * W + SEC), 8);
+    assert_eq!(c.next_to_settle, 40);
+    assert_eq!(c.e, c.e_min);
+    assert_inv(&c);
 }
 
 #[test]
-#[should_panic(expected = "challenge has not started")]
-fn submission_before_start() {
-    let mut c = setup();
-    ctx(&acc("org.near"), T0);
-    let ch = c.create_challenge(challenge_input(T0 + DAY, T0 + EPOCH, T0 + EPOCH));
-    c.publish_challenge(ch);
-    submit(&mut c, ch, "u.near", T0 + 1, 1);
+#[should_panic(expected = "NOTHING_TO_SETTLE")]
+fn settle_before_end() {
+    let mut c = setup(&["c0.near"]);
+    settle(&mut c, W - 1);
+}
+
+// ------------------------------------------------------------------ spark bounty
+
+#[test]
+fn spark_bounty_moves_weight() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", SEC, ONE_NEAR + FEE, None);
+    give(&mut c, "bob.near", 2 * SEC, MIN + FEE, Some("alice.near"));
+    assert_eq!(c.gifts.get(&(0, acc("alice.near"))).unwrap().weight.0, ONE_NEAR + MIN / 4);
+    assert_eq!(c.gifts.get(&(0, acc("bob.near"))).unwrap().weight.0, MIN - MIN / 4);
+    assert_eq!(c.fires.get(&0).unwrap().weight_sum.0, ONE_NEAR + MIN);
+    assert_eq!(c.profiles.get(&acc("alice.near")).unwrap().sparks, 1);
 }
 
 #[test]
-#[should_panic(expected = "submission deadline passed")]
-fn submission_after_deadline() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    submit(&mut c, ch, "u.near", T0 + 10 * EPOCH, 1);
+fn spark_bounty_capped() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", SEC, ONE_NEAR, None);
+    give(&mut c, "whale.near", 2 * SEC, 100 * ONE_NEAR + FEE, Some("alice.near"));
+    let a = c.gifts.get(&(0, acc("alice.near"))).unwrap().weight.0;
+    assert_eq!(a, (ONE_NEAR - FEE) + (MIN * 3 / 2) / 4);
 }
 
 #[test]
-#[should_panic(expected = "one submission per account per challenge")]
-fn one_submission_per_challenge() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    submit(&mut c, ch, "u.near", T0 + 1, 1);
-    submit(&mut c, ch, "u.near", T0 + 2, 2);
+fn spark_rules() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "bob.near", SEC, MIN + FEE, Some("alice.near")); // spark hasn't given
+    assert_eq!(c.gifts.get(&(0, acc("bob.near"))).unwrap().weight.0, MIN);
+    give(&mut c, "alice.near", 2 * SEC, MIN + FEE, None);
+    give(&mut c, "bob.near", 3 * SEC, MIN, Some("alice.near")); // not first-ever gift
+    assert_eq!(c.gifts.get(&(0, acc("alice.near"))).unwrap().weight.0, MIN);
+    give(&mut c, "carol.near", 4 * SEC, MIN + FEE, Some("carol.near")); // self-spark
+    assert_eq!(c.gifts.get(&(0, acc("carol.near"))).unwrap().weight.0, MIN);
+}
+
+// ------------------------------------------------------------------ settle
+
+#[test]
+fn catch_math_matches_spec() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    let f = c.fires.get(&0).unwrap().clone();
+    assert_eq!(f.outcome, Outcome::Caught);
+    assert_eq!(f.total.0, 13 * ONE_NEAR / 10);
+    assert_eq!(f.fee.0, 13 * ONE_NEAR / 100);
+    assert_eq!(f.pay.0, 117 * ONE_NEAR / 100);
+    assert_eq!(f.minted.0, 104_000 * ONE_GOOD);
+    assert_eq!(c.hearth, ONE_NEAR + 13 * ONE_NEAR / 100);
+    assert_eq!(c.earmarked, 104_000 * ONE_GOOD);
+    assert_eq!((c.e, c.pin.base_goal), (1, 5));
+    assert_eq!(f.payout, PayoutStatus::Due);
+    assert_eq!(c.payouts_owed, f.pay.0);
+    assert!(c.hwm_h > ONE_NEAR);
+    assert_inv(&c);
 }
 
 #[test]
-#[should_panic(expected = "duplicate evidence")]
-fn duplicate_evidence_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    submit(&mut c, ch, "a.near", T0 + 1, 7);
-    submit(&mut c, ch, "b.near", T0 + 2, 7);
+fn smother_shrinks_cap_and_refunds() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "erin.near", SEC, MIN + FEE, None);
+    settle(&mut c, W + SEC);
+    assert_eq!(c.fires.get(&0).unwrap().outcome, Outcome::Smothered);
+    assert_eq!(c.max_supply, MAX_SUPPLY - 2_500_000 * ONE_GOOD);
+    assert_eq!((c.refunds_owed, c.e), (MIN, -1));
+    assert_eq!(claim(&mut c, "erin.near", &[0]), (0, MIN));
+    assert_eq!(c.refunds_owed, 0);
+    assert_inv(&c);
 }
 
 #[test]
-#[should_panic(expected = "evidence_hash must be 64 lowercase hex")]
-fn malformed_hash_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    ctx(&acc("u.near"), T0 + 1);
-    c.submit_deed(ch, "XYZ".into(), "https://x.org/a".into(), "d".into());
+fn empty_week_writes_no_record() {
+    let mut c = setup(&["c0.near"]);
+    settle(&mut c, W + SEC);
+    assert!(c.fires.get(&0).is_none());
+    assert_eq!(c.current_fire().week.0, 1);
+    assert_eq!(c.get_fire(U64(0)).outcome, Outcome::Smothered);
 }
 
 #[test]
-#[should_panic(expected = "evidence_uri must start with")]
-fn malformed_uri_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    ctx(&acc("u.near"), T0 + 1);
-    c.submit_deed(ch, hash(1), "javascript:alert(1)".into(), "d".into());
-}
-
-#[test]
-#[should_panic(expected = "Attach at least")]
-fn storage_must_be_paid() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    ctx_no_deposit(&acc("u.near"), T0 + 1);
-    c.submit_deed(ch, hash(1), "https://x.org/a".into(), "d".into());
-}
-
-#[test]
-#[should_panic(expected = "submission rate limit")]
-fn submission_rate_limit() {
-    let mut c = setup();
-    ctx(&acc("org.near"), T0);
-    let ids: Vec<u32> = (0..6)
-        .map(|_| {
-            let id = c.create_challenge(challenge_input(T0, T0 + EPOCH, T0 + EPOCH));
-            c.publish_challenge(id);
-            id
-        })
-        .collect();
-    for (n, ch) in ids.into_iter().enumerate() {
-        submit(&mut c, ch, "spammer.near", T0 + 1, n as u64);
+fn causes_rotate() {
+    let mut c = setup(&["c0.near", "c1.near", "c2.near"]);
+    for (k, want) in [1u32, 2, 0].iter().enumerate() {
+        settle(&mut c, (k as u64 + 1) * W + SEC);
+        assert_eq!(c.pin.cause, *want);
     }
 }
 
-#[test]
-#[should_panic(expected = "challenge open to verified contributors only")]
-fn verified_only_challenge() {
-    let mut c = setup();
-    ctx(&acc("org.near"), T0);
-    let mut input = challenge_input(T0, T0 + EPOCH, T0 + EPOCH);
-    input.open_to = OpenTo::VerifiedContributors;
-    let ch = c.create_challenge(input);
-    c.publish_challenge(ch);
-    submit(&mut c, ch, "newbie.near", T0 + 1, 1);
-}
-
-// ------------------------------------------------------------------ verification
+// ------------------------------------------------------------------ payout
 
 #[test]
-fn three_distinct_attestations_approve_and_count() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let sid = submit(&mut c, ch, "u.near", T0 + 1, 1);
-    ctx(&reviewers()[0], T0 + 2);
-    c.attest(sid, true);
-    ctx(&reviewers()[1], T0 + 2);
-    c.attest(sid, true);
-    assert_eq!(c.get_submission(sid).unwrap().submission.status, SubmissionStatus::Pending);
-    ctx(&reviewers()[2], T0 + 2);
-    c.attest(sid, true);
-    let v = c.get_submission(sid).unwrap();
-    assert_eq!(v.submission.status, SubmissionStatus::Approved);
-    assert!(!v.finalized);
-    let e = c.get_epoch(U64(0)).record;
-    assert_eq!((e.approved_deeds, e.participants), (1, 1));
-    ctx(&acc("x.near"), T0 + 2 + DAY);
-    assert!(c.get_submission(sid).unwrap().finalized);
-    assert!(c.get_account(acc("u.near")).verified_contributor);
+fn payout_success() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    resolve(&mut c, 0, true);
+    assert_eq!(c.fires.get(&0).unwrap().payout, PayoutStatus::Paid);
+    assert_eq!(c.payouts_owed, 0);
+    assert!(c.due_weeks.is_empty());
 }
 
 #[test]
-#[should_panic(expected = "cannot attest your own submission")]
-fn self_attestation_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let sid = submit(&mut c, ch, "r0.near", T0 + 1, 1);
-    ctx(&reviewers()[0], T0 + 2);
-    c.attest(sid, true);
+#[should_panic(expected = "NOT_DUE")]
+fn payout_twice_rejected() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    ctx("anyone.near", W + SEC, 0);
+    c.payout(U64(0));
+    c.payout(U64(0));
 }
 
 #[test]
-#[should_panic(expected = "already attested")]
-fn duplicate_attestation_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let sid = submit(&mut c, ch, "u.near", T0 + 1, 1);
-    ctx(&reviewers()[0], T0 + 2);
-    c.attest(sid, true);
-    c.attest(sid, false);
+fn lazy_settlement_triggers_one_payout() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    give(&mut c, "zed.near", W + 5 * SEC, MIN + FEE, None);
+    assert_eq!(c.fires.get(&0).unwrap().payout, PayoutStatus::Sending);
 }
 
 #[test]
-#[should_panic(expected = "not an eligible attestor")]
-fn sock_puppet_cannot_attest() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let sid = submit(&mut c, ch, "u.near", T0 + 1, 1);
-    ctx(&acc("sock.near"), T0 + 2);
-    c.attest(sid, true);
-}
-
-#[test]
-fn verified_contributor_can_attest_after_window() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let s1 = submit(&mut c, ch, "u.near", T0 + 1, 1);
-    approve(&mut c, s1, T0 + 2);
-    let s2 = submit(&mut c, ch, "v.near", T0 + 3, 2);
-    ctx(&acc("u.near"), T0 + 2 + DAY);
-    c.attest(s2, true);
-    assert_eq!(c.get_submission(s2).unwrap().submission.approvals.len(), 1);
-}
-
-#[test]
-fn three_rejections_reject() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let sid = submit(&mut c, ch, "u.near", T0 + 1, 1);
-    for r in reviewers().iter().take(3) {
-        ctx(r, T0 + 2);
-        c.attest(sid, false);
+fn failed_payout_kills_cause_and_carries() {
+    let mut c = setup(&["c0.near", "c1.near"]);
+    fire0_caught(&mut c);
+    resolve(&mut c, 0, false);
+    assert!(c.causes[0].dead);
+    assert_eq!(c.carry_total, 117 * ONE_NEAR / 100);
+    assert_eq!(c.pin.cause, 1);
+    for (i, who) in ["a1", "a2", "a3", "a4", "a5"].iter().enumerate() {
+        give(&mut c, &format!("{who}.near"), W + (i as u64 + 1) * SEC, MIN + FEE, None);
     }
-    let v = c.get_submission(sid).unwrap();
-    assert_eq!(v.submission.status, SubmissionStatus::Rejected);
-    assert!(v.finalized);
-    assert_eq!(c.get_epoch(U64(0)).record.approved_deeds, 0);
+    settle(&mut c, 2 * W + SEC);
+    resolve(&mut c, 1, true);
+    assert_eq!((c.carry_total, c.payouts_owed), (0, 0));
+    assert_eq!(c.pin.cause, 1); // skips dead c0
+    assert_inv(&c);
 }
 
 #[test]
-#[should_panic(expected = "verification deadline passed")]
-fn attestation_after_deadline() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    let sid = submit(&mut c, ch, "u.near", T0 + 1, 1);
-    ctx(&reviewers()[0], T0 + 11 * EPOCH);
-    c.attest(sid, true);
-}
-
-// ------------------------------------------------------------------ disputes
-
-fn approved_sub(c: &mut Contract) -> (u32, U64) {
-    let ch = with_challenge(c);
-    let sid = submit(c, ch, "u.near", T0 + 1, 1);
-    approve(c, sid, T0 + 2);
-    (ch, sid)
-}
-
-#[test]
-fn dispute_uncounts_and_overturn_rejects() {
-    let mut c = setup();
-    let (_, sid) = approved_sub(&mut c);
-    ctx(&reviewers()[3], T0 + 3);
-    let did = c.open_dispute(sid, "evidence is a stock photo".into());
-    assert_eq!(c.get_submission(sid).unwrap().submission.status, SubmissionStatus::Disputed);
-    assert_eq!(c.get_epoch(U64(0)).record.approved_deeds, 0);
-    assert!(!c.get_account(acc("u.near")).verified_contributor);
-    for r in [4, 5] {
-        ctx(&reviewers()[r], T0 + 4);
-        c.vote_dispute(did, false);
+fn carry_slices_requeue_under_own_week() {
+    let mut c = setup(&["c0.near", "c1.near", "c2.near"]);
+    fire0_caught(&mut c);
+    resolve(&mut c, 0, false);
+    for (i, who) in ["a1", "a2", "a3", "a4", "a5"].iter().enumerate() {
+        give(&mut c, &format!("{who}.near"), W + (i as u64 + 1) * SEC, MIN + FEE, None);
     }
-    assert_eq!(c.get_submission(sid).unwrap().submission.status, SubmissionStatus::Rejected);
-    assert_eq!(c.list_disputes(None, None)[0].outcome, Some(false));
+    settle(&mut c, 2 * W + SEC);
+    resolve(&mut c, 1, false);
+    let q: Vec<(u64, u128)> = c.carry.iter().copied().collect();
+    assert!(q.contains(&(0, 117 * ONE_NEAR / 100)));
+    assert!(q.iter().any(|&(w, _)| w == 1));
+    assert!(!c.extinguished);
 }
 
 #[test]
-fn upheld_dispute_recounts_in_resolution_epoch() {
-    let mut c = setup();
-    let (_, sid) = approved_sub(&mut c);
-    ctx(&reviewers()[3], T0 + 3);
-    let did = c.open_dispute(sid, "suspicious".into());
-    let t = T0 + EPOCH + 5; // resolved in epoch 1
-    for r in [4, 5] {
-        ctx(&reviewers()[r], t);
-        c.vote_dispute(did, true);
+fn extinguished_refunds_carry_pro_rata() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    resolve(&mut c, 0, false);
+    assert!(c.extinguished);
+    let (good, near) = claim(&mut c, "alice.near", &[0]);
+    assert_eq!(good, 82_000 * ONE_GOOD);
+    assert_eq!(near, 117 * ONE_NEAR / 100 * 10 / 13);
+    assert_inv(&c);
+}
+
+#[test]
+#[should_panic(expected = "EXTINGUISHED")]
+fn give_disabled_after_extinguished() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    resolve(&mut c, 0, false);
+    give(&mut c, "zed.near", W + 10 * SEC, ONE_NEAR, None);
+}
+
+#[test]
+fn open_fire_smothers_after_extinguished() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    for (i, who) in ["a1", "a2", "a3", "a4", "a5"].iter().enumerate() {
+        give(&mut c, &format!("{who}.near"), W + (i as u64 + 2) * SEC, MIN + FEE, None);
     }
-    let v = c.get_submission(sid).unwrap();
-    assert_eq!(v.submission.status, SubmissionStatus::Approved);
-    assert_eq!(v.submission.approval_epoch, Some(U64(1)));
-    assert!(v.finalized);
-    assert_eq!(c.get_epoch(U64(0)).record.approved_deeds, 0);
-    assert_eq!(c.get_epoch(U64(1)).record.approved_deeds, 1);
+    // first give triggered payout(0) → Sending; it fails now
+    ctx("goodcoin.near", W + 10 * SEC, 0);
+    c.on_payout(U64(0), Err(PromiseError::Failed));
+    settle(&mut c, 2 * W + SEC);
+    assert_eq!(c.fires.get(&1).unwrap().outcome, Outcome::Smothered);
+    assert_eq!(claim(&mut c, "a1.near", &[1]).1, MIN);
+}
+
+// ------------------------------------------------------------------ claims
+
+#[test]
+fn claim_shares_match_weights() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    assert_eq!(claim(&mut c, "alice.near", &[0]).0, 82_000 * ONE_GOOD);
+    assert_eq!(claim(&mut c, "bob.near", &[0]).0, 6_000 * ONE_GOOD);
+    assert_eq!(claim(&mut c, "carol.near", &[0]).0, 8_000 * ONE_GOOD);
+    assert_eq!(c.ft_balance_of(acc("alice.near")).0, 82_000 * ONE_GOOD);
+    assert_eq!(c.earmarked, 8_000 * ONE_GOOD);
+    assert_inv(&c);
 }
 
 #[test]
-#[should_panic(expected = "original attestors cannot vote")]
-fn original_attestor_cannot_judge_dispute() {
-    let mut c = setup();
-    let (_, sid) = approved_sub(&mut c);
-    ctx(&reviewers()[3], T0 + 3);
-    let did = c.open_dispute(sid, "x".into());
-    ctx(&reviewers()[0], T0 + 4);
-    c.vote_dispute(did, true);
-}
-
-#[test]
-#[should_panic(expected = "dispute opener cannot vote")]
-fn opener_cannot_judge_dispute() {
-    let mut c = setup();
-    let (_, sid) = approved_sub(&mut c);
-    ctx(&reviewers()[3], T0 + 3);
-    let did = c.open_dispute(sid, "x".into());
-    c.vote_dispute(did, false);
-}
-
-#[test]
-#[should_panic(expected = "dispute window closed")]
-fn dispute_after_window() {
-    let mut c = setup();
-    let (_, sid) = approved_sub(&mut c);
-    ctx(&reviewers()[3], T0 + 2 + DAY);
-    c.open_dispute(sid, "late".into());
-}
-
-#[test]
-#[should_panic(expected = "submission already went through a dispute")]
-fn one_dispute_per_submission() {
-    let mut c = setup();
-    let (_, sid) = approved_sub(&mut c);
-    ctx(&reviewers()[3], T0 + 3);
-    let did = c.open_dispute(sid, "x".into());
-    for r in [4, 5] {
-        ctx(&reviewers()[r], T0 + 4);
-        c.vote_dispute(did, true);
-    }
-    ctx(&reviewers()[3], T0 + 5);
-    c.open_dispute(sid, "again".into());
-}
-
-#[test]
-#[should_panic(expected = "epoch did not succeed")]
-fn disputed_deed_earns_nothing() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + 1, "u", 2, 0);
-    let sid = c.get_submission_for(ch, acc("u0.near")).unwrap().submission.id;
-    ctx(&reviewers()[3], T0 + 3);
-    c.open_dispute(sid, "x".into());
-    settle(&mut c, T0 + EPOCH + DAY);
-    assert_eq!(c.get_epoch(U64(0)).record.status, EpochStatus::Failed);
-    ctx(&acc("u1.near"), T0 + EPOCH + DAY);
-    c.claim_reward(U64(0));
-}
-
-// ------------------------------------------------------------------ epochs & rewards
-
-#[test]
-fn successful_epoch_mints_unlocks_and_streaks() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 3, 0);
-    assert_eq!(settle(&mut c, T0 + EPOCH + DAY), 1);
-    let r = c.get_epoch(U64(0)).record;
-    assert_eq!(r.status, EpochStatus::Succeeded);
-    assert_eq!(r.reward_per_participant.0, good(25));
-    assert_eq!(r.reward_total.0, good(75));
-    assert_eq!(r.unlocked.0, good(1_000));
-    let t = c.get_treasury();
-    assert_eq!((t[0].1.spendable.0, t[1].1.spendable.0, t[2].1.spendable.0), (good(500), good(300), good(200)));
-    let s = c.get_stats();
-    assert_eq!((s.current_streak, s.longest_streak, s.successful_epochs), (1, 1, 1));
-    assert_eq!(c.get_supply().reserve_earmarked_unclaimed.0, good(75));
-    ctx(&acc("u0.near"), T0 + EPOCH + DAY);
-    assert_eq!(c.claim_reward(U64(0)).0, good(25));
-    assert_eq!(c.get_supply().total_supply.0, TREASURY_ALLOCATION + good(25));
-    assert_invariants(&c);
-}
-
-#[test]
-fn epoch_fails_when_both_targets_missed() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "solo", 1, 0); // 1 deed, 1 participant vs 2/2
-    settle(&mut c, T0 + EPOCH + DAY);
-    assert_eq!(c.get_epoch(U64(0)).record.status, EpochStatus::Failed);
-}
-
-#[test]
-fn epoch_fails_when_only_deeds_target_met() {
-    let mut cfg = config();
-    cfg.deeds_target = 4;
-    cfg.participants_target = 3;
-    let mut c = setup_with(cfg);
-    ctx(&acc("org.near"), T0);
-    let a = c.create_challenge(challenge_input(T0, T0 + 10 * EPOCH, T0 + 11 * EPOCH));
-    c.publish_challenge(a);
-    let b = c.create_challenge(challenge_input(T0, T0 + 10 * EPOCH, T0 + 11 * EPOCH));
-    c.publish_challenge(b);
-    // 2 people × 2 challenges = 4 deeds (target met) but 2 participants < 3.
-    for (i, who) in ["p.near", "q.near"].iter().enumerate() {
-        for (j, ch) in [a, b].iter().enumerate() {
-            let sid = submit(&mut c, *ch, who, T0 + DAY, (i * 10 + j) as u64);
-            approve(&mut c, sid, T0 + DAY);
-        }
-    }
-    let r = c.get_epoch(U64(0)).record;
-    assert_eq!((r.approved_deeds, r.participants), (4, 2));
-    settle(&mut c, T0 + EPOCH + DAY);
-    assert_eq!(c.get_epoch(U64(0)).record.status, EpochStatus::Failed);
-}
-
-#[test]
-fn epoch_fails_when_only_participants_target_met() {
-    let mut cfg = config();
-    cfg.deeds_target = 3;
-    cfg.participants_target = 2;
-    let mut c = setup_with(cfg);
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 2, 0); // 2 participants ok, 2 deeds < 3
-    settle(&mut c, T0 + EPOCH + DAY);
-    assert_eq!(c.get_epoch(U64(0)).record.status, EpochStatus::Failed);
-}
-
-#[test]
-fn failed_epoch_burns_and_resets_streak_but_keeps_record() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    for e in 0..3u64 {
-        successful_epoch(&mut c, ch, T0 + e * EPOCH + DAY, &format!("e{e}u"), 2, e * 100);
-    }
-    // epoch 3: nobody
-    settle(&mut c, T0 + 4 * EPOCH + DAY);
-    let s = c.get_stats();
-    assert_eq!((s.current_streak, s.longest_streak, s.successful_epochs, s.failed_epochs), (0, 3, 3, 1));
-    let r = c.get_epoch(U64(3)).record;
-    assert_eq!(r.status, EpochStatus::Failed);
-    let locked_before = TREASURY_ALLOCATION - good(3_000);
-    assert_eq!(r.burned.0, locked_before / 1_000);
-    assert_eq!(c.get_supply().total_burned.0, r.burned.0);
-    assert_invariants(&c);
-}
-
-#[test]
-fn streak_multiplier_grows_and_caps() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    for e in 0..3u64 {
-        successful_epoch(&mut c, ch, T0 + e * EPOCH + DAY, &format!("e{e}u"), 2, e * 100);
-    }
-    settle(&mut c, T0 + 3 * EPOCH + DAY);
-    let rpp: Vec<u128> = (0..3).map(|e| c.get_epoch(U64(e)).record.reward_per_participant.0).collect();
-    assert_eq!(rpp, vec![good(25), good(25) * 11_250 / 10_000, good(25) * 12_500 / 10_000]);
-    assert_eq!(c.reward_for_streak(8), good(50));
-    assert_eq!(c.reward_for_streak(100), good(50));
-}
-
-#[test]
-#[should_panic(expected = "can be settled from")]
-fn premature_settlement_rejected() {
-    let mut c = setup();
-    settle(&mut c, T0 + EPOCH + DAY - 1);
-}
-
-#[test]
-#[should_panic(expected = "can be settled from")]
-fn double_settlement_impossible() {
-    let mut c = setup();
-    assert_eq!(settle(&mut c, T0 + EPOCH + DAY), 1);
-    settle(&mut c, T0 + EPOCH + DAY + 5);
-}
-
-#[test]
-fn settlement_is_bounded_and_ordered() {
-    let mut c = setup();
-    assert_eq!(settle(&mut c, T0 + 40 * EPOCH), MAX_SETTLE_PER_CALL);
-    assert_eq!(c.get_stats().next_to_settle.0, 16);
-    assert_eq!(settle(&mut c, T0 + 40 * EPOCH), 16);
-    assert_eq!(settle(&mut c, T0 + 40 * EPOCH), 7); // epochs 32..=38 (39 still in window)
-    assert_eq!(c.get_stats().failed_epochs, 39);
-    assert_invariants(&c);
-}
-
-#[test]
-#[should_panic(expected = "already claimed")]
+#[should_panic(expected = "NOTHING_TO_CLAIM")]
 fn double_claim_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 2, 0);
-    settle(&mut c, T0 + EPOCH + DAY);
-    ctx(&acc("u0.near"), T0 + EPOCH + DAY);
-    c.claim_reward(U64(0));
-    c.claim_reward(U64(0));
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    claim(&mut c, "alice.near", &[0]);
+    claim(&mut c, "alice.near", &[0]);
 }
 
 #[test]
-#[should_panic(expected = "epoch not settled yet")]
-fn claim_before_settlement_rejected() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 2, 0);
-    ctx(&acc("u0.near"), T0 + EPOCH);
-    c.claim_reward(U64(0));
+#[should_panic(expected = "ATTACH_STORAGE_DEPOSIT")]
+fn claim_requires_storage_deposit() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    ctx("alice.near", W + SEC, 0);
+    c.claim(vec![U64(0)]);
 }
 
 #[test]
-#[should_panic(expected = "no counted approved deed")]
-fn non_participant_cannot_claim() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 2, 0);
-    settle(&mut c, T0 + EPOCH + DAY);
-    ctx(&acc("mallory.near"), T0 + EPOCH + DAY);
-    c.claim_reward(U64(0));
+#[should_panic(expected = "NOT_SETTLED")]
+fn claim_unsettled() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", SEC, ONE_NEAR, None);
+    claim(&mut c, "alice.near", &[0]);
 }
 
 #[test]
-fn reserve_exhaustion_is_all_or_nothing() {
-    let mut cfg = config();
-    cfg.base_reward = U128(REWARD_RESERVE / 3 + 1); // 3 participants need > reserve
-    let mut c = setup_with(cfg);
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 3, 0);
-    settle(&mut c, T0 + EPOCH + DAY);
-    let r = c.get_epoch(U64(0)).record;
-    assert_eq!(r.status, EpochStatus::SucceededNoReserve);
-    assert_eq!(r.reward_total.0, 0);
-    assert_eq!(c.get_supply().reserve_remaining.0, REWARD_RESERVE);
-    assert_eq!(c.get_stats().current_streak, 1);
-    assert_invariants(&c);
+fn failed_refund_reopens() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "erin.near", SEC, MIN + FEE, None);
+    settle(&mut c, W + SEC);
+    claim(&mut c, "erin.near", &[0]);
+    ctx("goodcoin.near", W + SEC, 0);
+    c.on_refund(acc("erin.near"), vec![(U64(0), RefundKind::Smother, U128(MIN))], Err(PromiseError::Failed));
+    assert_eq!(c.refunds_owed, MIN);
+    assert_eq!(claim(&mut c, "erin.near", &[0]).1, MIN);
 }
 
 #[test]
-fn claimable_epochs_view() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    successful_epoch(&mut c, ch, T0 + DAY, "u", 2, 0);
-    settle(&mut c, T0 + EPOCH + DAY);
-    assert_eq!(c.get_account(acc("u0.near")).claimable_epochs, vec![U64(0)]);
-    ctx(&acc("u0.near"), T0 + EPOCH + DAY);
-    c.claim_reward(U64(0));
-    assert!(c.get_account(acc("u0.near")).claimable_epochs.is_empty());
+fn close_cancels_unclaimed_and_shrinks_cap() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    claim(&mut c, "alice.near", &[0]);
+    let t = W + 52 * W;
+    for _ in 0..4 {
+        settle(&mut c, t);
+    }
+    let cap = c.max_supply;
+    ctx("anyone.near", t, 0);
+    c.close(U64(0));
+    assert_eq!(c.max_supply, cap - 22_000 * ONE_GOOD);
+    assert_eq!(c.earmarked, 0);
+    assert_inv(&c);
 }
 
-// ------------------------------------------------------------------ treasury
-
-/// Two verified contributors (u0, u1) and 1,000 GOOD unlocked.
-fn funded(c: &mut Contract) -> u64 {
-    let ch = with_challenge(c);
-    successful_epoch(c, ch, T0 + DAY, "u", 2, 0);
-    let t = T0 + EPOCH + DAY;
-    settle(c, t);
-    t
+#[test]
+#[should_panic(expected = "TOO_EARLY")]
+fn close_too_early() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    ctx("anyone.near", 10 * W, 0);
+    c.close(U64(0));
 }
 
-fn proposal(amount: u128, bucket: Bucket) -> ProposalInput {
-    ProposalInput {
-        title: "Park cleanup kit".into(),
-        description: "Gloves and bags for 40 volunteers".into(),
-        bucket,
-        amount: U128(amount),
-        beneficiary: acc("park.near"),
-        beneficiary_name: "Park Friends".into(),
-        evidence_uri: "https://example.org/park".into(),
-        voting_duration_ns: U64(DAY),
+// ------------------------------------------------------------------ redeem
+
+#[test]
+fn redeem_at_floor() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    claim(&mut c, "alice.near", &[0]);
+    let (h0, b0) = (c.hearth, c.backed());
+    ctx("alice.near", W + SEC, 0);
+    let near = c.redeem(U128(10_000 * ONE_GOOD)).0;
+    assert_eq!(near, crate::math::mul_div(10_000 * ONE_GOOD, h0, b0));
+    assert!(crate::math::floor_ge(c.hearth, c.backed(), h0, b0));
+    assert_eq!(c.total_burned, 10_000 * ONE_GOOD);
+    ctx("goodcoin.near", W + SEC, 0);
+    c.on_redeem(U128(near), Err(PromiseError::Failed));
+    assert_eq!(c.hearth, h0);
+    assert_inv(&c);
+}
+
+#[test]
+#[should_panic(expected = "INSUFFICIENT_BALANCE")]
+fn redeem_more_than_balance() {
+    let mut c = setup(&["c0.near"]);
+    ctx("alice.near", SEC, 0);
+    c.redeem(U128(1));
+}
+
+#[test]
+fn redeem_not_blocked_by_unsettled_fires() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    claim(&mut c, "alice.near", &[0]);
+    ctx("alice.near", 100 * W, 0);
+    assert!(c.redeem(U128(ONE_GOOD)).0 > 0);
+}
+
+// ------------------------------------------------------------------ kindle
+
+/// Fire 0 caught (goal → 5), fire 1 smothered (goal → 4), fire 2 has 3 of 4 givers.
+fn three_of_four(c: &mut Contract) {
+    fire0_caught(c);
+    claim(c, "alice.near", &[0]);
+    give(c, "erin.near", W + 40 * SEC, MIN + FEE, None);
+    settle(c, 2 * W + SEC);
+    for (i, who) in ["frank", "gina", "hank"].iter().enumerate() {
+        give(c, &format!("{who}.near"), 2 * W + 80 * SEC + i as u64 * SEC, MIN + FEE, None);
     }
 }
 
 #[test]
-fn proposal_passes_and_executes() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    let pid = c.create_proposal(proposal(good(400), Bucket::Community));
-    for v in ["u0.near", "u1.near"] {
-        ctx(&acc(v), t + 1);
-        c.vote_proposal(pid, true);
+fn kindle_rescues_without_raising_goal() {
+    let mut c = setup(&["c0.near", "c1.near"]);
+    three_of_four(&mut c);
+    let e_before = c.e;
+    ctx("alice.near", 2 * W + 330 * SEC, 0);
+    let quote = c.kindle_quote(U64(2)).unwrap().0;
+    let expected = crate::math::mul3_div2_ceil(1, 1000 * MIN, c.backed(), BPS, c.hearth);
+    assert_eq!(quote, expected);
+    assert_eq!(c.kindle(U64(2)).0, quote);
+    settle(&mut c, 3 * W + SEC);
+    assert_eq!(c.fires.get(&2).unwrap().outcome, Outcome::Caught);
+    assert_eq!(c.e, e_before);
+    assert_inv(&c);
+}
+
+#[test]
+#[should_panic(expected = "NOT_RESCUE_WINDOW")]
+fn kindle_outside_window() {
+    let mut c = setup(&["c0.near", "c1.near"]);
+    three_of_four(&mut c);
+    ctx("alice.near", 2 * W + 300 * SEC, 0);
+    c.kindle(U64(2));
+}
+
+#[test]
+#[should_panic(expected = "TOO_FAR_FROM_GOAL")]
+fn kindle_too_far() {
+    let mut c = setup(&["c0.near"]);
+    fire0_caught(&mut c);
+    claim(&mut c, "alice.near", &[0]);
+    give(&mut c, "erin.near", W + 40 * SEC, MIN + FEE, None);
+    ctx("alice.near", W + 330 * SEC, 0);
+    c.kindle(U64(1));
+}
+
+#[test]
+#[should_panic(expected = "INSUFFICIENT_BALANCE")]
+fn kindle_needs_good() {
+    let mut c = setup(&["c0.near", "c1.near"]);
+    three_of_four(&mut c);
+    ctx("nobody.near", 2 * W + 330 * SEC, 0);
+    c.kindle(U64(2));
+}
+
+// ------------------------------------------------------------------ views
+
+#[test]
+fn fire_card_is_svg() {
+    let mut c = setup(&["c0.near"]);
+    give(&mut c, "alice.near", SEC, ONE_NEAR, None);
+    let svg = c.fire_card(U64(0));
+    assert!(svg.starts_with("<svg") && svg.contains("1 / 4 givers"));
+}
+
+// ------------------------------------------------------------------ property test
+
+mod prop {
+    use super::*;
+    use proptest::prelude::*;
+
+    #[derive(Debug, Clone)]
+    enum Op {
+        Give(u8, u8, bool),
+        Settle,
+        Payout(bool),
+        Claim(u8),
+        Redeem(u8, u8),
+        Kindle(u8),
+        Advance(u16),
     }
-    ctx(&acc("anyone.near"), t + DAY);
-    assert_eq!(c.finalize_proposal(pid), ProposalStatus::Executed);
-    assert_eq!(c.ft_balance_of(acc("park.near")).0, good(400));
-    let b = &c.get_treasury()[0].1;
-    assert_eq!((b.spendable.0, b.disbursed.0), (good(100), good(400)));
-    assert_invariants(&c);
-}
 
-#[test]
-fn proposal_without_quorum_rejected() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    let pid = c.create_proposal(proposal(good(100), Bucket::Community));
-    c.vote_proposal(pid, true);
-    ctx(&acc("anyone.near"), t + DAY);
-    assert_eq!(c.finalize_proposal(pid), ProposalStatus::Rejected);
-    assert_eq!(c.ft_balance_of(acc("park.near")).0, 0);
-}
-
-#[test]
-#[should_panic(expected = "bucket spendable balance too low")]
-fn proposal_limited_by_bucket() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    let pid = c.create_proposal(proposal(good(250), Bucket::Education)); // education spendable = 200
-    for v in ["u0.near", "u1.near"] {
-        ctx(&acc(v), t + 1);
-        c.vote_proposal(pid, true);
+    fn op() -> impl Strategy<Value = Op> {
+        prop_oneof![
+            5 => (0u8..10, 2u8..30, any::<bool>()).prop_map(|(a, n, s)| Op::Give(a, n, s)),
+            1 => Just(Op::Settle),
+            2 => any::<bool>().prop_map(Op::Payout),
+            2 => (0u8..10).prop_map(Op::Claim),
+            1 => (0u8..10, 1u8..100).prop_map(|(a, p)| Op::Redeem(a, p)),
+            2 => (0u8..10).prop_map(Op::Kindle),
+            3 => (1u16..200).prop_map(Op::Advance),
+        ]
     }
-    ctx(&acc("anyone.near"), t + DAY);
-    c.finalize_proposal(pid);
-}
 
-#[test]
-#[should_panic(expected = "amount must be in (0, max_per_proposal]")]
-fn proposal_cap_enforced() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    c.create_proposal(proposal(good(501), Bucket::Community));
-}
-
-#[test]
-#[should_panic(expected = "only verified contributors can propose")]
-fn unverified_cannot_propose() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("mallory.near"), t);
-    c.create_proposal(proposal(good(1), Bucket::Community));
-}
-
-#[test]
-#[should_panic(expected = "must be a verified contributor before voting started")]
-fn late_verified_cannot_vote() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    let mut p = proposal(good(1), Bucket::Community);
-    p.voting_duration_ns = U64(EPOCH);
-    let pid = c.create_proposal(p);
-    // New contributor verified after voting started.
-    let ch = c.list_challenges(None, None)[0].challenge.id;
-    let sid = submit(&mut c, ch, "late.near", t + 1, 999);
-    approve(&mut c, sid, t + 1);
-    ctx(&acc("late.near"), t + 2 * DAY);
-    c.vote_proposal(pid, true);
-}
-
-#[test]
-#[should_panic(expected = "already voted")]
-fn one_account_one_vote() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    let pid = c.create_proposal(proposal(good(1), Bucket::Community));
-    c.vote_proposal(pid, true);
-    c.vote_proposal(pid, true);
-}
-
-#[test]
-#[should_panic(expected = "per-epoch funding cap reached")]
-fn per_epoch_funding_cap() {
-    let mut c = setup();
-    let t = funded(&mut c);
-    ctx(&acc("u0.near"), t);
-    let p1 = c.create_proposal(proposal(good(500), Bucket::Community));
-    let p2 = c.create_proposal(proposal(good(300), Bucket::Environment));
-    let p3 = c.create_proposal(proposal(good(100), Bucket::Education));
-    for p in [p1, p2, p3] {
-        for v in ["u0.near", "u1.near"] {
-            ctx(&acc(v), t + 1);
-            c.vote_proposal(p, true);
-        }
+    fn name(i: u8) -> String {
+        format!("u{i}.near")
     }
-    ctx(&acc("anyone.near"), t + DAY);
-    c.finalize_proposal(p1);
-    c.finalize_proposal(p2); // 800 = cap
-    c.finalize_proposal(p3); // exceeds
-}
 
-#[test]
-#[should_panic(expected = "treasury cannot unregister")]
-fn treasury_cannot_unregister() {
-    let mut c = setup();
-    ctx_1yocto(&contract_id(), T0);
-    use near_contract_standards::storage_management::StorageManagement;
-    c.storage_unregister(Some(true));
-}
+    /// Weeks where `who` has something to claim (mirrors `claim`'s rules).
+    fn claimable(c: &Contract, who: &AccountId) -> Vec<u64> {
+        (0..c.next_to_settle)
+            .filter(|&w| {
+                let (Some(g), Some(f)) = (c.gifts.get(&(w, who.clone())), c.fires.get(&w)) else { return false };
+                let share = f.outcome == Outcome::Caught && !g.claimed_share && !f.closed
+                    && crate::math::mul_div(f.minted.0, g.weight.0, f.weight_sum.0) > 0;
+                let refund = f.outcome == Outcome::Smothered && !g.claimed_refund;
+                let carry = f.carry_refundable.0 > 0 && !g.claimed_carry;
+                share || refund || carry
+            })
+            .rev()
+            .take(52)
+            .collect()
+    }
 
-// ------------------------------------------------------------------ property-style invariant run
-
-#[test]
-fn invariants_hold_over_mixed_history() {
-    let mut c = setup();
-    let ch = with_challenge(&mut c);
-    // Deterministic pseudo-random history over 8 epochs.
-    let mut x: u64 = 42;
-    let mut next = || {
-        x ^= x << 13;
-        x ^= x >> 7;
-        x ^= x << 17;
-        x
-    };
-    let mut n = 0u64;
-    for e in 0..8u64 {
-        let people = (next() % 4) as usize; // 0..=3
-        for i in 0..people {
-            n += 1;
-            let sid = submit(&mut c, ch, &format!("e{e}p{i}.near"), T0 + e * EPOCH + DAY, n);
-            if next() % 5 == 0 {
-                for r in reviewers().iter().take(3) {
-                    ctx(r, T0 + e * EPOCH + DAY);
-                    c.attest(sid, false);
+    proptest! {
+        #![proptest_config(ProptestConfig { cases: 24, .. ProptestConfig::default() })]
+        #[test]
+        fn invariants_hold_over_random_histories(ops in proptest::collection::vec(op(), 1..150)) {
+            let mut c = setup(&["c0.near", "c1.near", "c2.near"]);
+            let mut t: u64 = SEC;
+            for o in ops {
+                ctx("viewer.near", t, 0);
+                let behind = c.current_week() - c.next_to_settle;
+                match o {
+                    Op::Advance(s) => t += s as u64 * SEC,
+                    Op::Settle if behind > 0 => { settle(&mut c, t); }
+                    Op::Give(a, n, s) if behind <= 16 && !c.extinguished => {
+                        let spark = s.then(|| name((a + 1) % 10));
+                        give(&mut c, &name(a), t, n as u128 * MIN / 2 + FEE, spark.as_deref());
+                    }
+                    Op::Payout(ok) => {
+                        let w = (0..c.next_to_settle).find(|w| c.fires.get(w).map(|f| matches!(f.payout, PayoutStatus::Due | PayoutStatus::Sending)).unwrap_or(false));
+                        if let Some(w) = w { resolve(&mut c, w, ok); }
+                    }
+                    Op::Claim(a) if behind <= 16 => {
+                        let weeks = claimable(&c, &acc(&name(a)));
+                        if !weeks.is_empty() {
+                            // settle_due inside claim may settle more weeks first; claimable weeks stay claimable
+                            claim(&mut c, &name(a), &weeks);
+                        }
+                    }
+                    Op::Redeem(a, p) => {
+                        let bal = c.good_balance(&acc(&name(a)));
+                        if bal > 0 {
+                            ctx(&name(a), t, 0);
+                            c.redeem(U128((bal * p as u128 / 100).max(1)));
+                        }
+                    }
+                    Op::Kindle(a) if behind == 0 => {
+                        let w = c.current_week();
+                        if let Some(q) = c.kindle_quote(U64(w)) {
+                            if c.good_balance(&acc(&name(a))) >= q.0 {
+                                ctx(&name(a), t, 0);
+                                c.kindle(U64(w));
+                            }
+                        }
+                    }
+                    _ => {}
                 }
-            } else {
-                approve(&mut c, sid, T0 + e * EPOCH + DAY);
+                ctx("viewer.near", t, 0);
+                assert_inv(&c);
+                prop_assert!(c.total_minted + c.earmarked <= c.max_supply);
             }
         }
-        if e > 0 {
-            settle(&mut c, T0 + e * EPOCH + DAY + 1);
-        }
-        assert_invariants(&c);
     }
-    settle(&mut c, T0 + 9 * EPOCH);
-    let s = c.get_stats();
-    assert_eq!(s.successful_epochs + s.failed_epochs, 8);
-    assert!(s.longest_streak >= s.current_streak);
-    // Claim everything claimable.
-    for a in c.list_accounts(None, None) {
-        for e in c.get_account(a.0.clone()).claimable_epochs {
-            ctx(&a.0, T0 + 9 * EPOCH);
-            c.claim_reward(e);
-        }
-    }
-    assert_eq!(c.get_supply().reserve_earmarked_unclaimed.0, 0);
-    assert_invariants(&c);
 }

@@ -1,64 +1,49 @@
-//! # GOODCOIN — Proof of Good
+//! # GOODCOIN — Make good contagious
 //!
-//! A NEP-141 memecoin whose supply reacts to collective, peer-verified good deeds.
+//! Three rules:
+//! 1. **Give together.** One fire per week for one public good. Enough givers → it catches:
+//!    90% to the cause, 10% to the Hearth. Too few → every gift is refunded and that week's GOOD
+//!    can never exist (max supply shrinks).
+//! 2. **Get GOOD.** Givers of a caught fire receive GOOD, paid for at ≥ (1+β)× the floor, so every
+//!    catch raises the floor (Hearth NEAR ÷ backed GOOD) for every holder. The floor never decreases.
+//! 3. **Bring a friend.** A newcomer who names you passes part of their first-gift weight to you.
 //!
-//! * Every 7-day epoch (time-derived, no admin) the community must reach BOTH an approved-deeds
-//!   target and a unique-participants target.
-//! * Success: every counted participant may claim `base_reward × streak multiplier` GOOD (minted from
-//!   the unminted 400M reserve), a fixed slice of the public-goods treasury unlocks for proposals,
-//!   and the community streak grows.
-//! * Failure: nothing is minted, the streak resets, and 0.1% of the locked treasury is burned.
+//! Holders can **kindle** (burn GOOD) to rescue a fire in its final 10%.
 //!
-//! All parameters are fixed in `new`. There is no owner, no setter, no upgrade method; the deploy
-//! script deletes every full-access key after initialization.
-//!
-//! Modules: [`deeds`] challenges & submissions · [`verify`] attestations & disputes ·
-//! [`epoch`] settlement, rewards, streak · [`treasury`] buckets & governance ·
-//! [`vesting`] non-protocol allocations · [`views`] read API · [`token`] NEP-141/145/148.
+//! No owner, no setters, no upgrade method; every access key is deleted after `new()`.
 
-pub mod deeds;
-pub mod epoch;
+pub mod claims;
 pub mod events;
+pub mod fire;
+pub mod hearth;
+pub mod kindle;
+pub mod math;
+pub mod payout;
 pub mod token;
-pub mod treasury;
 pub mod types;
-pub mod verify;
-pub mod vesting;
 pub mod views;
 
 #[cfg(test)]
 mod tests;
 
 use near_contract_standards::fungible_token::FungibleToken;
-use near_contract_standards::fungible_token::events::{FtBurn, FtMint};
 use near_contract_standards::fungible_token::metadata::{FT_METADATA_SPEC, FungibleTokenMetadata};
 use near_sdk::json_types::{U64, U128};
-use near_sdk::store::{LookupMap, LookupSet, Vector};
-use near_sdk::{
-    AccountId, BorshStorageKey, NearToken, PanicOnDefault, Promise, env, near, require,
-};
+use near_sdk::store::{LookupMap, Vector};
+use near_sdk::{AccountId, BorshStorageKey, PanicOnDefault, env, near, require};
 
+use crate::math::{base_goal, e_max, e_min, floor_ge, mul_div};
 use crate::types::*;
 
 #[near]
 #[derive(BorshStorageKey)]
 pub enum StorageKey {
     FtAccounts,
-    Challenges,
-    Submissions,
-    SubmissionByChallengeAccount,
-    EvidenceHashes,
-    Stats,
-    AccountIndex,
-    Epochs,
-    EpochParticipant,
-    Claimed,
-    Disputes,
-    Proposals,
-    ProposalVotes,
-    EpochFunding,
-    Activity,
-    Rate,
+    Fires,
+    Gifts,
+    Profiles,
+    Reports,
+    Carry,
 }
 
 #[near(contract_state)]
@@ -67,324 +52,187 @@ pub struct Contract {
     pub(crate) token: FungibleToken,
     pub(crate) metadata: FungibleTokenMetadata,
     pub(crate) config: Config,
+    pub(crate) causes: Vec<Cause>,
     pub(crate) genesis_ns: u64,
+    pub(crate) e_min: i32,
+    pub(crate) e_max: i32,
 
-    // ---- supply accounting (S(t) = S(0) + M(t) − B(t)) ----
-    /// Cumulative minted, including genesis. Never decreases. ≤ MAX_SUPPLY.
+    // ---- supply (GOOD) ----
+    pub(crate) max_supply: u128,
     pub(crate) total_minted: u128,
     pub(crate) total_burned: u128,
-    /// Unminted reward reserve not yet earmarked.
-    pub(crate) reserve_remaining: u128,
-    /// Earmarked for successful epochs, not yet claimed (unminted).
-    pub(crate) reserve_earmarked: u128,
-    pub(crate) vesting_claimed: Vec<u128>,
+    pub(crate) earmarked: u128,
+    pub(crate) seed: u128,
 
-    // ---- treasury ----
-    pub(crate) buckets: Vec<BucketState>,
+    // ---- Hearth (yoctoNEAR) and floor high-water mark ----
+    pub(crate) hearth: u128,
+    pub(crate) hwm_h: u128,
+    pub(crate) hwm_b: u128,
 
-    // ---- deeds & verification ----
-    pub(crate) challenges: Vector<Challenge>,
-    pub(crate) submissions: Vector<Submission>,
-    pub(crate) submission_by_challenge_account: LookupMap<(u32, AccountId), u64>,
-    pub(crate) evidence_hashes: LookupMap<String, u64>,
-    pub(crate) disputes: Vector<Dispute>,
-    pub(crate) stats: LookupMap<AccountId, AccountStats>,
-    pub(crate) account_index: Vector<AccountId>,
-    pub(crate) rate: LookupMap<(u64, AccountId), RateCounter>,
-
-    // ---- epochs ----
-    pub(crate) epochs: LookupMap<u64, EpochRecord>,
-    /// Counted approved deeds per (epoch, account).
-    pub(crate) epoch_participant: LookupMap<(u64, AccountId), u32>,
-    pub(crate) claimed: LookupSet<(u64, AccountId)>,
-    /// Next epoch to settle; all epochs below it are settled.
+    // ---- fire schedule ----
     pub(crate) next_to_settle: u64,
+    pub(crate) e: i32,
     pub(crate) streak: u32,
     pub(crate) longest_streak: u32,
-    pub(crate) successful_epochs: u32,
-    pub(crate) failed_epochs: u32,
-    pub(crate) total_approved: u64,
-    pub(crate) unique_contributors: u64,
+    pub(crate) extinguished: bool,
+    /// Pinned parameters of fire `next_to_settle`.
+    pub(crate) pin: Pin,
+    /// Caught weeks whose payout is `Due`, oldest first.
+    pub(crate) due_weeks: Vec<u64>,
 
-    // ---- governance ----
-    pub(crate) proposals: Vector<Proposal>,
-    pub(crate) proposal_votes: LookupSet<(u64, AccountId)>,
-    pub(crate) epoch_funding: LookupMap<u64, u128>,
+    // ---- NEAR liabilities (for invariant 4) ----
+    pub(crate) escrow_open: u128,
+    pub(crate) payouts_owed: u128,
+    pub(crate) refunds_owed: u128,
+    pub(crate) carry_total: u128,
 
-    // ---- transparency ----
-    pub(crate) activity: Vector<Activity>,
+    pub(crate) fires: LookupMap<u64, Fire>,
+    pub(crate) gifts: LookupMap<(u64, AccountId), Gift>,
+    pub(crate) profiles: LookupMap<AccountId, Profile>,
+    pub(crate) reports: LookupMap<u64, Report>,
+    pub(crate) carry: Vector<(u64, u128)>,
 }
 
 #[near]
 impl Contract {
-    /// One-time initialization. Validates the full configuration; nothing can change it afterwards.
+    /// One-time initialization. The attached deposit seeds the Hearth (SPEC §2).
     #[init]
-    pub fn new(config: Config, icon: Option<String>) -> Self {
-        validate_config(&config);
-        let genesis_ns = env::block_timestamp();
-        let me = env::current_account_id();
-
-        let mut token = FungibleToken::new(StorageKey::FtAccounts);
-        token.internal_register_account(&me);
-        token.internal_deposit(&me, TREASURY_ALLOCATION);
-
-        let buckets = BUCKET_BPS
+    #[payable]
+    pub fn new(config: Config) -> Self {
+        validate(&config);
+        let seed_near = env::attached_deposit().as_yoctonear();
+        require!(seed_near > 0, "attach the Hearth seed");
+        let causes: Vec<Cause> = config
+            .causes
             .iter()
-            .map(|bps| BucketState {
-                locked: U128(TREASURY_ALLOCATION * bps / BPS),
-                ..Default::default()
-            })
+            .map(|c| Cause { account: c.account.clone(), name: c.name.clone(), uri: c.uri.clone(), dead: false })
             .collect();
-
-        let vesting_claimed = vec![0u128; config.vesting.len()];
-        let mut this = Self {
-            token,
+        let allowance = mul_div(config.allowance_bps as u128, MAX_SUPPLY, BPS);
+        let g0 = config.goal_start;
+        Self {
+            token: FungibleToken::new(StorageKey::FtAccounts),
             metadata: FungibleTokenMetadata {
                 spec: FT_METADATA_SPEC.to_string(),
                 name: "GOODCOIN".to_string(),
                 symbol: "GOOD".to_string(),
-                icon,
+                icon: Some(ICON.to_string()),
                 reference: None,
                 reference_hash: None,
                 decimals: 24,
             },
-            config,
-            genesis_ns,
-            total_minted: TREASURY_ALLOCATION,
+            e_min: e_min(g0, config.goal_min),
+            e_max: e_max(g0, config.goal_max),
+            seed: config.seed_good.0,
+            causes,
+            genesis_ns: env::block_timestamp(),
+            max_supply: MAX_SUPPLY,
+            total_minted: 0,
             total_burned: 0,
-            reserve_remaining: REWARD_RESERVE,
-            reserve_earmarked: 0,
-            vesting_claimed,
-            buckets,
-            challenges: Vector::new(StorageKey::Challenges),
-            submissions: Vector::new(StorageKey::Submissions),
-            submission_by_challenge_account: LookupMap::new(
-                StorageKey::SubmissionByChallengeAccount,
-            ),
-            evidence_hashes: LookupMap::new(StorageKey::EvidenceHashes),
-            disputes: Vector::new(StorageKey::Disputes),
-            stats: LookupMap::new(StorageKey::Stats),
-            account_index: Vector::new(StorageKey::AccountIndex),
-            rate: LookupMap::new(StorageKey::Rate),
-            epochs: LookupMap::new(StorageKey::Epochs),
-            epoch_participant: LookupMap::new(StorageKey::EpochParticipant),
-            claimed: LookupSet::new(StorageKey::Claimed),
+            earmarked: 0,
+            hearth: seed_near,
+            hwm_h: seed_near,
+            hwm_b: config.seed_good.0,
             next_to_settle: 0,
+            e: 0,
             streak: 0,
             longest_streak: 0,
-            successful_epochs: 0,
-            failed_epochs: 0,
-            total_approved: 0,
-            unique_contributors: 0,
-            proposals: Vector::new(StorageKey::Proposals),
-            proposal_votes: LookupSet::new(StorageKey::ProposalVotes),
-            epoch_funding: LookupMap::new(StorageKey::EpochFunding),
-            activity: Vector::new(StorageKey::Activity),
-        };
-        FtMint { owner_id: &me, amount: U128(TREASURY_ALLOCATION), memo: Some("genesis-treasury") }
-            .emit();
-        this.log_activity(ActivityKind::GenesisMint, None, Some(me), TREASURY_ALLOCATION, "public-goods treasury");
-        this
+            extinguished: false,
+            pin: Pin { week: U64(0), cause: 0, allowance: U128(allowance), e: 0, base_goal: base_goal(g0, 0) },
+            due_weeks: vec![],
+            escrow_open: 0,
+            payouts_owed: 0,
+            refunds_owed: 0,
+            carry_total: 0,
+            fires: LookupMap::new(StorageKey::Fires),
+            gifts: LookupMap::new(StorageKey::Gifts),
+            profiles: LookupMap::new(StorageKey::Profiles),
+            reports: LookupMap::new(StorageKey::Reports),
+            carry: Vector::new(StorageKey::Carry),
+            config,
+        }
     }
 }
 
-pub(crate) fn validate_config(c: &Config) {
-    require!(!c.label.is_empty() && c.label.len() <= MAX_LABEL, "label: 1-32 chars");
-    require!(c.epoch_duration_ns.0 > 0, "epoch_duration_ns must be > 0");
-    require!(c.deeds_target > 0 && c.participants_target > 0, "targets must be > 0");
+fn validate(c: &Config) {
+    require!(!c.label.is_empty() && c.label.len() <= 32, "label: 1-32 chars");
+    require!(c.week_ns.0 >= 10 * 1_000_000_000, "week must be >= 10s");
+    require!(c.min_gift.0 > c.record_fee.0 && c.record_fee.0 > 0, "min_gift > record_fee > 0");
+    require!(c.fee_bps > 0 && c.fee_bps < 10_000, "fee_bps in (0, 10000)");
+    require!(c.markup_bps > 0 && c.markup_bps <= 100_000, "markup_bps in (0, 100000]");
+    require!(c.bounty_bps <= 5_000, "bounty_bps <= 5000");
+    require!(c.allowance_bps > 0 && c.allowance_bps <= 1_000, "allowance_bps in (0, 1000]");
+    require!(c.seed_good.0 > 0 && c.seed_good.0 < MAX_SUPPLY, "seed_good in (0, max_supply)");
     require!(
-        c.deeds_target >= c.participants_target,
-        "deeds_target must be >= participants_target (each participant has >= 1 deed)"
+        c.goal_min >= 1 && c.goal_min <= c.goal_start && c.goal_start <= c.goal_max && c.goal_max <= 100_000,
+        "1 <= goal_min <= goal_start <= goal_max <= 100000"
     );
-    require!(c.base_reward.0 > 0, "base_reward must be > 0");
-    require!(c.streak_bonus_bps <= 10_000, "streak_bonus_bps <= 10000");
-    require!(c.streak_bonus_cap <= 100, "streak_bonus_cap <= 100");
-    require!(c.failure_burn_bps <= 1_000, "failure_burn_bps <= 1000 (10%)");
-    require!(c.min_attestations >= 1, "min_attestations >= 1");
-    require!(c.dispute_quorum >= 1, "dispute_quorum >= 1");
-    require!(
-        c.dispute_window_ns.0 > 0 && c.dispute_window_ns.0 <= c.epoch_duration_ns.0,
-        "0 < dispute_window_ns <= epoch_duration_ns"
-    );
-    let mut pool = c.reviewer_pool.clone();
-    pool.sort();
-    pool.dedup();
-    require!(pool.len() == c.reviewer_pool.len(), "reviewer_pool has duplicates");
-    require!(
-        c.reviewer_pool.len() as u32 >= c.min_attestations + c.dispute_quorum + 1,
-        "reviewer_pool must be >= min_attestations + dispute_quorum + 1 so disputes are always resolvable"
-    );
-    require!(!c.organizers.is_empty(), "organizers must not be empty");
-    let vest_total: u128 = c.vesting.iter().map(|v| v.total.0).sum();
-    require!(vest_total == VESTED_ALLOCATION, "vesting totals must equal 350M GOOD");
-    for v in &c.vesting {
-        require!(v.duration_ns.0 > 0 && v.cliff_ns.0 <= v.duration_ns.0, "vesting: 0 < cliff <= duration");
-        require!(!v.name.is_empty() && v.name.len() <= MAX_LABEL, "vesting name: 1-32 chars");
+    require!(!c.causes.is_empty() && c.causes.len() <= MAX_CAUSES, "1-16 causes");
+    let me = env::current_account_id();
+    for (i, cause) in c.causes.iter().enumerate() {
+        require!(cause.account != me, "the contract cannot be a cause");
+        require!(!is_implicit(&cause.account), "causes must be named accounts");
+        require!(!cause.name.is_empty() && cause.name.len() <= 80, "cause name: 1-80 chars");
+        require!(cause.uri.len() <= 512, "cause uri <= 512 chars");
+        require!(c.causes[..i].iter().all(|o| o.account != cause.account), "duplicate cause");
     }
-    require!(
-        c.gov.threshold_bps > 5_000 && c.gov.threshold_bps <= 10_000,
-        "threshold_bps in (5000, 10000]"
-    );
-    require!(c.gov.quorum >= 1, "gov quorum >= 1");
-    require!(
-        c.gov.min_voting_ns.0 > 0 && c.gov.min_voting_ns.0 <= c.gov.max_voting_ns.0,
-        "0 < min_voting_ns <= max_voting_ns"
-    );
-    require!(c.gov.max_per_proposal.0 <= c.gov.max_per_epoch.0, "max_per_proposal <= max_per_epoch");
-    require!(
-        c.limits.submissions_per_epoch > 0
-            && c.limits.attestations_per_epoch > 0
-            && c.limits.disputes_per_epoch > 0,
-        "rate limits must be > 0"
-    );
 }
+
+/// 64-hex implicit accounts and 0x-prefixed eth-implicit accounts can't fail a transfer.
+pub(crate) fn is_implicit(a: &AccountId) -> bool {
+    let s = a.as_str();
+    (s.len() == 64 && s.bytes().all(|b| b.is_ascii_hexdigit())) || (s.starts_with("0x") && s.len() == 42)
+}
+
+const ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4c4 12 18 18 18 34a18 18 0 0 1-36 0c0-9 5-14 9-19 1 6 4 9 7 10-2-9 0-17 2-25z' fill='%23f97316'/%3E%3C/svg%3E";
 
 // ---------------------------------------------------------------- internal helpers
 impl Contract {
     pub(crate) fn now() -> u64 {
         env::block_timestamp()
     }
-
-    pub(crate) fn epoch_at(&self, t: u64) -> u64 {
-        (t.saturating_sub(self.genesis_ns)) / self.config.epoch_duration_ns.0
+    pub(crate) fn week_ns(&self) -> u64 {
+        self.config.week_ns.0
+    }
+    pub(crate) fn current_week(&self) -> u64 {
+        (Self::now() - self.genesis_ns) / self.week_ns()
+    }
+    pub(crate) fn week_end(&self, w: u64) -> u64 {
+        self.genesis_ns + (w + 1) * self.week_ns()
+    }
+    /// Backed supply B = circulating + earmarked + seed.
+    pub(crate) fn backed(&self) -> u128 {
+        self.total_minted - self.total_burned + self.earmarked + self.seed
+    }
+    pub(crate) fn headroom(&self) -> u128 {
+        self.max_supply - self.total_minted - self.earmarked
     }
 
-    pub(crate) fn current_epoch(&self) -> u64 {
-        self.epoch_at(Self::now())
+    /// Update the floor high-water mark and assert the floor never decreased (SPEC §3.5, inv. 3).
+    pub(crate) fn bump_floor(&mut self) {
+        let (h, b) = (self.hearth, self.backed());
+        require!(floor_ge(h, b, self.hwm_h, self.hwm_b), "INVARIANT: floor decreased");
+        self.hwm_h = h;
+        self.hwm_b = b;
     }
 
-    pub(crate) fn epoch_start(&self, e: u64) -> u64 {
-        self.genesis_ns + e * self.config.epoch_duration_ns.0
-    }
-
-    pub(crate) fn epoch_end(&self, e: u64) -> u64 {
-        self.epoch_start(e + 1)
-    }
-
-    /// The single mint path. Callers: `claim_reward`, `claim_vested`.
-    pub(crate) fn internal_mint(&mut self, to: &AccountId, amount: u128, memo: &str) {
-        require!(amount > 0, "mint amount must be > 0");
-        let new_total = self.total_minted.checked_add(amount).expect("overflow");
-        require!(new_total <= MAX_SUPPLY, "max supply exceeded");
-        self.total_minted = new_total;
-        self.token.internal_deposit(to, amount);
-        FtMint { owner_id: to, amount: U128(amount), memo: Some(memo) }.emit();
-    }
-
-    /// Burn from the contract-held treasury.
-    pub(crate) fn internal_burn_treasury(&mut self, amount: u128, memo: &str) {
-        if amount == 0 {
-            return;
+    /// Lazy settlement (SPEC §3.1): used by give, kindle, claim, close, report.
+    pub(crate) fn settle_due(&mut self) {
+        let cur = self.current_week();
+        require!(cur - self.next_to_settle <= MAX_SETTLE, "SETTLE_FIRST");
+        while self.next_to_settle < cur {
+            self.settle_one(self.next_to_settle);
         }
-        let me = env::current_account_id();
-        self.token.internal_withdraw(&me, amount);
-        self.total_burned += amount;
-        FtBurn { owner_id: &me, amount: U128(amount), memo: Some(memo) }.emit();
-    }
-
-    pub(crate) fn log_activity(
-        &mut self,
-        kind: ActivityKind,
-        epoch: Option<u64>,
-        account: Option<AccountId>,
-        amount: u128,
-        memo: &str,
-    ) {
-        self.activity.push(Activity {
-            kind,
-            epoch: epoch.map(U64),
-            account,
-            amount: U128(amount),
-            timestamp: U64(Self::now()),
-            block_height: U64(env::block_height()),
-            memo: memo.to_string(),
-        });
-    }
-
-    pub(crate) fn stats_mut(&mut self, account: &AccountId) -> &mut AccountStats {
-        if !self.stats.contains_key(account) {
-            self.stats.insert(account.clone(), AccountStats::default());
-            self.account_index.push(account.clone());
+        if let Some(&w) = self.due_weeks.first() {
+            self.internal_payout(w);
         }
-        self.stats.get_mut(account).unwrap()
     }
 
-    pub(crate) fn rate_mut(&mut self, account: &AccountId) -> &mut RateCounter {
-        let key = (self.current_epoch(), account.clone());
-        if !self.rate.contains_key(&key) {
-            self.rate.insert(key.clone(), RateCounter::default());
-        }
-        self.rate.get_mut(&key).unwrap()
+    pub(crate) fn next_live_cause(&self, after: u32) -> Option<u32> {
+        let n = self.causes.len() as u32;
+        (1..=n).map(|i| (after + i) % n).find(|&i| !self.causes[i as usize].dead)
     }
 
-    pub(crate) fn is_reviewer(&self, account: &AccountId) -> bool {
-        self.config.reviewer_pool.contains(account)
+    pub(crate) fn is_cause(&self, a: &AccountId) -> bool {
+        self.causes.iter().any(|c| &c.account == a)
     }
-
-    /// Verified contributor = has a finalized approved deed (dispute window passed or upheld).
-    pub(crate) fn verified_at(&self, account: &AccountId, t: u64) -> bool {
-        self.stats
-            .get(account)
-            .and_then(|s| s.verified_since)
-            .is_some_and(|since| since.0 <= t)
-    }
-
-    pub(crate) fn can_attest(&self, account: &AccountId) -> bool {
-        self.is_reviewer(account) || self.verified_at(account, Self::now())
-    }
-
-    pub(crate) fn treasury_held(&self) -> u128 {
-        self.buckets.iter().map(|b| b.locked.0 + b.spendable.0).sum()
-    }
-
-    pub(crate) fn unvested_total(&self) -> u128 {
-        self.config
-            .vesting
-            .iter()
-            .zip(self.vesting_claimed.iter())
-            .map(|(v, c)| v.total.0 - c)
-            .sum()
-    }
-}
-
-impl Contract {
-    /// Charge the caller for storage added since `initial_usage`; refund the rest of the deposit.
-    /// Users pay for exactly the bytes they create (DECISIONS D21).
-    /// `near_sdk::store` collections buffer writes until the call ends, so flush them first,
-    /// otherwise `env::storage_usage()` would not yet include the new bytes.
-    pub(crate) fn charge_storage(&mut self, initial_usage: u64) {
-        self.challenges.flush();
-        self.submissions.flush();
-        self.submission_by_challenge_account.flush();
-        self.evidence_hashes.flush();
-        self.disputes.flush();
-        self.stats.flush();
-        self.account_index.flush();
-        self.rate.flush();
-        self.epochs.flush();
-        self.epoch_participant.flush();
-        self.proposals.flush();
-        self.epoch_funding.flush();
-        self.activity.flush();
-        charge_storage_raw(initial_usage);
-    }
-}
-
-fn charge_storage_raw(initial_usage: u64) {
-    let used = env::storage_usage().saturating_sub(initial_usage);
-    let cost = env::storage_byte_cost().saturating_mul(used as u128);
-    let attached = env::attached_deposit();
-    require!(
-        attached >= cost,
-        format!("Attach at least {} yoctoNEAR to cover {} bytes of storage", cost.as_yoctonear(), used)
-    );
-    let refund = attached.saturating_sub(cost);
-    if refund > NearToken::from_yoctonear(0) {
-        Promise::new(env::predecessor_account_id()).transfer(refund).detach();
-    }
-}
-
-pub(crate) fn check_len(field: &str, s: &str, min: usize, max: usize) {
-    let n = s.chars().count();
-    require!(n >= min && n <= max, format!("{field}: length must be {min}-{max}"));
 }

@@ -1,117 +1,97 @@
-//! Read API. Every number the frontend shows comes from these views.
+//! Read API. Every number a client shows comes from here.
 use near_sdk::json_types::{U64, U128};
 use near_sdk::{AccountId, env, near};
 
+use crate::math::floor_ge;
 use crate::types::*;
 use crate::{Contract, ContractExt};
 
 #[near(serializers = [json])]
-pub struct Stats {
+pub struct FireView {
+    pub week: U64,
+    pub start_ns: U64,
+    pub end_ns: U64,
+    pub cause: u32,
+    pub cause_account: AccountId,
+    pub cause_name: String,
+    pub base_goal: u32,
+    pub kindled: u32,
+    pub goal: u32,
+    pub givers: u32,
+    pub total: U128,
+    pub allowance: U128,
+    pub outcome: Outcome,
+    pub minted: U128,
+    pub payout: PayoutStatus,
+    /// True while earlier fires still await settlement (numbers for this week are provisional).
+    pub settle_pending: bool,
+    pub rescue_window_open: bool,
+}
+
+#[near(serializers = [json])]
+pub struct SupplyView {
+    pub max_supply: U128,
+    pub total_minted: U128,
+    pub total_burned: U128,
+    pub circulating: U128,
+    pub earmarked: U128,
+    pub seed: U128,
+    pub headroom: U128,
+}
+
+#[near(serializers = [json])]
+pub struct HearthView {
+    /// H (yoctoNEAR).
+    pub hearth: U128,
+    /// B (GOOD base units).
+    pub backed: U128,
+    /// Floor in yoctoNEAR per whole GOOD (H·10^24 / B), for display only.
+    pub floor_yocto_per_good: U128,
+    pub high_water_h: U128,
+    pub high_water_b: U128,
+}
+
+#[near(serializers = [json])]
+pub struct StatsView {
     pub label: String,
     pub genesis_ns: U64,
     pub now_ns: U64,
-    pub current_epoch: U64,
-    pub current_epoch_start_ns: U64,
-    pub current_epoch_end_ns: U64,
+    pub current_week: U64,
     pub next_to_settle: U64,
-    /// When `settle_epochs` can next be called successfully.
-    pub next_settle_at_ns: U64,
-    pub current_streak: u32,
+    pub e: i32,
+    pub e_min: i32,
+    pub e_max: i32,
+    pub streak: u32,
     pub longest_streak: u32,
-    pub successful_epochs: u32,
-    pub failed_epochs: u32,
-    pub total_approved_deeds: U64,
-    pub unique_contributors: U64,
-    pub challenges: u32,
-    pub submissions: U64,
-    pub disputes: U64,
-    pub proposals: U64,
-    pub accounts: u32,
-    /// Reward per participant if the current epoch succeeds (streak multiplier applied).
-    pub next_reward_per_participant: U128,
-}
-
-#[near(serializers = [json])]
-pub struct Supply {
-    pub max_supply: U128,
-    pub total_supply: U128,
-    /// Cumulative minted incl. genesis.
-    pub total_minted: U128,
-    pub total_burned: U128,
-    /// total_supply − tokens held by the contract (treasury + anything sent to it).
-    pub circulating: U128,
-    pub treasury_held: U128,
-    pub reserve_remaining: U128,
-    pub reserve_earmarked_unclaimed: U128,
-    pub unvested: U128,
-    pub vested_unclaimed: U128,
-    /// max_supply − total_minted: can never be exceeded.
-    pub mint_headroom: U128,
-}
-
-#[near(serializers = [json])]
-pub struct Invariants {
-    /// total_supply == total_minted − total_burned
-    pub supply_equation: bool,
-    /// total_minted ≤ MAX_SUPPLY
-    pub under_cap: bool,
-    /// total_minted + reserve_remaining + reserve_earmarked + unvested == MAX_SUPPLY (every token accounted for)
-    pub allocations_accounted: bool,
-    /// contract FT balance ≥ Σ bucket locked + spendable
-    pub treasury_backed: bool,
-}
-
-#[near(serializers = [json])]
-pub struct EpochView {
-    pub epoch: U64,
-    pub start_ns: U64,
-    pub end_ns: U64,
-    pub settleable_at_ns: U64,
-    pub deeds_target: u32,
-    pub participants_target: u32,
-    pub record: EpochRecord,
-}
-
-#[near(serializers = [json])]
-pub struct ChallengeView {
-    pub challenge: Challenge,
-    pub phase: ChallengePhase,
-}
-
-#[near(serializers = [json])]
-pub struct SubmissionView {
-    pub submission: Submission,
-    /// Outcome can no longer change (rejected, dispute resolved, or dispute window passed).
-    pub finalized: bool,
-    pub dispute_window_ends_ns: Option<U64>,
+    pub extinguished: bool,
+    pub due_weeks: Vec<U64>,
+    pub escrow_open: U128,
+    pub payouts_owed: U128,
+    pub refunds_owed: U128,
+    pub carry_total: U128,
 }
 
 #[near(serializers = [json])]
 pub struct AccountView {
     pub account: AccountId,
-    pub stats: AccountStats,
-    pub is_reviewer: bool,
-    pub is_organizer: bool,
-    pub verified_contributor: bool,
-    pub can_attest: bool,
     pub good_balance: U128,
     pub registered: bool,
-    /// Settled successful epochs with an unclaimed reward for this account.
-    pub claimable_epochs: Vec<U64>,
+    pub is_cause: bool,
+    pub profile: Option<Profile>,
+    /// Floor gain since the account's first gift, in bps (10000 = unchanged).
+    pub floor_gain_bps: Option<U128>,
 }
 
 #[near(serializers = [json])]
-pub struct VestingView {
-    pub index: u32,
-    pub schedule: VestingSchedule,
-    pub vested: U128,
-    pub claimed: U128,
-}
-
-fn page(from: Option<u32>, limit: Option<u32>, len: u32) -> std::ops::Range<u32> {
-    let from = from.unwrap_or(0).min(len);
-    let limit = limit.unwrap_or(MAX_PAGE).min(MAX_PAGE);
-    from..(from.saturating_add(limit)).min(len)
+pub struct Invariants {
+    /// total_minted + earmarked ≤ max_supply
+    pub within_cap: bool,
+    /// ft_total_supply == total_minted − total_burned
+    pub supply_equation: bool,
+    /// floor H/B ≥ highest floor ever recorded
+    pub floor_never_decreased: bool,
+    /// contract balance ≥ Hearth + escrow + payouts owed + refunds owed + carry + storage
+    pub solvent: bool,
 }
 
 #[near]
@@ -120,226 +100,190 @@ impl Contract {
         self.config.clone()
     }
 
-    pub fn get_stats(&self) -> Stats {
-        let e = self.current_epoch();
-        Stats {
+    pub fn get_causes(&self) -> Vec<Cause> {
+        self.causes.clone()
+    }
+
+    pub fn get_stats(&self) -> StatsView {
+        StatsView {
             label: self.config.label.clone(),
             genesis_ns: U64(self.genesis_ns),
             now_ns: U64(Self::now()),
-            current_epoch: U64(e),
-            current_epoch_start_ns: U64(self.epoch_start(e)),
-            current_epoch_end_ns: U64(self.epoch_end(e)),
+            current_week: U64(self.current_week()),
             next_to_settle: U64(self.next_to_settle),
-            next_settle_at_ns: U64(self.epoch_end(self.next_to_settle) + self.config.dispute_window_ns.0),
-            current_streak: self.streak,
+            e: self.e,
+            e_min: self.e_min,
+            e_max: self.e_max,
+            streak: self.streak,
             longest_streak: self.longest_streak,
-            successful_epochs: self.successful_epochs,
-            failed_epochs: self.failed_epochs,
-            total_approved_deeds: U64(self.total_approved),
-            unique_contributors: U64(self.unique_contributors),
-            challenges: self.challenges.len(),
-            submissions: U64(self.submissions.len() as u64),
-            disputes: U64(self.disputes.len() as u64),
-            proposals: U64(self.proposals.len() as u64),
-            accounts: self.account_index.len(),
-            next_reward_per_participant: U128(self.projected_reward(e)),
+            extinguished: self.extinguished,
+            due_weeks: self.due_weeks.iter().map(|&w| U64(w)).collect(),
+            escrow_open: U128(self.escrow_open),
+            payouts_owed: U128(self.payouts_owed),
+            refunds_owed: U128(self.refunds_owed),
+            carry_total: U128(self.carry_total),
         }
     }
 
-    pub fn get_supply(&self) -> Supply {
-        let me = env::current_account_id();
-        let held = self.token.accounts.get(&me).unwrap_or(0);
-        let now = Self::now();
-        let vested_unclaimed: u128 = (0..self.config.vesting.len())
-            .map(|i| self.vested_amount(i, now) - self.vesting_claimed[i])
-            .sum();
-        Supply {
-            max_supply: U128(MAX_SUPPLY),
-            total_supply: U128(self.token.total_supply),
+    pub fn current_fire(&self) -> FireView {
+        self.fire_view(self.current_week())
+    }
+
+    pub fn get_fire(&self, week: U64) -> FireView {
+        self.fire_view(week.0)
+    }
+
+    /// Fires `from .. from+limit` (≤ 100), oldest first, including weeks nobody gave in.
+    pub fn list_fires(&self, from: U64, limit: Option<u64>) -> Vec<FireView> {
+        let to = (from.0 + limit.unwrap_or(MAX_PAGE).min(MAX_PAGE)).min(self.current_week() + 1);
+        (from.0..to).map(|w| self.fire_view(w)).collect()
+    }
+
+    pub fn get_gift(&self, week: U64, account_id: AccountId) -> Option<Gift> {
+        self.gifts.get(&(week.0, account_id)).cloned()
+    }
+
+    pub fn get_supply(&self) -> SupplyView {
+        SupplyView {
+            max_supply: U128(self.max_supply),
             total_minted: U128(self.total_minted),
             total_burned: U128(self.total_burned),
-            circulating: U128(self.token.total_supply - held),
-            treasury_held: U128(self.treasury_held()),
-            reserve_remaining: U128(self.reserve_remaining),
-            reserve_earmarked_unclaimed: U128(self.reserve_earmarked),
-            unvested: U128(self.unvested_total()),
-            vested_unclaimed: U128(vested_unclaimed),
-            mint_headroom: U128(MAX_SUPPLY - self.total_minted),
+            circulating: U128(self.total_minted - self.total_burned),
+            earmarked: U128(self.earmarked),
+            seed: U128(self.seed),
+            headroom: U128(self.headroom()),
         }
     }
 
-    /// On-chain self-check anyone can call.
-    pub fn check_invariants(&self) -> Invariants {
-        let me = env::current_account_id();
-        let held = self.token.accounts.get(&me).unwrap_or(0);
-        Invariants {
-            supply_equation: self.token.total_supply == self.total_minted - self.total_burned,
-            under_cap: self.total_minted <= MAX_SUPPLY,
-            allocations_accounted: self.total_minted
-                + self.reserve_remaining
-                + self.reserve_earmarked
-                + self.unvested_total()
-                == MAX_SUPPLY,
-            treasury_backed: held >= self.treasury_held(),
+    pub fn get_hearth(&self) -> HearthView {
+        HearthView {
+            hearth: U128(self.hearth),
+            backed: U128(self.backed()),
+            floor_yocto_per_good: U128(crate::math::mul_div(self.hearth, ONE_GOOD, self.backed())),
+            high_water_h: U128(self.hwm_h),
+            high_water_b: U128(self.hwm_b),
         }
-    }
-
-    pub fn get_treasury(&self) -> Vec<(Bucket, BucketState)> {
-        Bucket::ALL.iter().map(|b| (*b, self.buckets[b.idx()].clone())).collect()
-    }
-
-    pub fn get_epoch(&self, epoch: U64) -> EpochView {
-        let e = epoch.0;
-        EpochView {
-            epoch,
-            start_ns: U64(self.epoch_start(e)),
-            end_ns: U64(self.epoch_end(e)),
-            settleable_at_ns: U64(self.epoch_end(e) + self.config.dispute_window_ns.0),
-            deeds_target: self.config.deeds_target,
-            participants_target: self.config.participants_target,
-            record: self.epochs.get(&e).cloned().unwrap_or_default(),
-        }
-    }
-
-    /// Epochs from `from` (default: newest first window ending at current epoch).
-    pub fn list_epochs(&self, from: Option<U64>, limit: Option<u32>) -> Vec<EpochView> {
-        let cur = self.current_epoch();
-        let limit = limit.unwrap_or(MAX_PAGE).min(MAX_PAGE) as u64;
-        let start = from.map(|f| f.0).unwrap_or(cur.saturating_sub(limit - 1));
-        (start..=cur).take(limit as usize).map(|e| self.get_epoch(U64(e))).collect()
-    }
-
-    pub fn get_challenge(&self, challenge_id: u32) -> Option<ChallengeView> {
-        self.challenges
-            .get(challenge_id)
-            .map(|c| ChallengeView { challenge: c.clone(), phase: self.challenge_phase(c) })
-    }
-
-    pub fn list_challenges(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<ChallengeView> {
-        page(from_index, limit, self.challenges.len())
-            .filter_map(|i| self.get_challenge(i))
-            .collect()
-    }
-
-    pub fn get_submission(&self, submission_id: U64) -> Option<SubmissionView> {
-        self.submissions.get(submission_id.0 as u32).map(|s| self.submission_view(s))
-    }
-
-    pub fn list_submissions(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<SubmissionView> {
-        page(from_index, limit, self.submissions.len())
-            .filter_map(|i| self.submissions.get(i).map(|s| self.submission_view(s)))
-            .collect()
-    }
-
-    pub fn get_submission_for(&self, challenge_id: u32, account_id: AccountId) -> Option<SubmissionView> {
-        self.submission_by_challenge_account
-            .get(&(challenge_id, account_id))
-            .and_then(|id| self.get_submission(U64(*id)))
-    }
-
-    pub fn list_disputes(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<Dispute> {
-        page(from_index, limit, self.disputes.len())
-            .filter_map(|i| self.disputes.get(i).cloned())
-            .collect()
-    }
-
-    pub fn list_proposals(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<Proposal> {
-        page(from_index, limit, self.proposals.len())
-            .filter_map(|i| self.proposals.get(i).cloned())
-            .collect()
-    }
-
-    pub fn has_voted(&self, proposal_id: U64, account_id: AccountId) -> bool {
-        self.proposal_votes.contains(&(proposal_id.0, account_id))
     }
 
     pub fn get_account(&self, account_id: AccountId) -> AccountView {
-        let stats = self.stats.get(&account_id).cloned().unwrap_or_default();
-        let claimable_epochs = stats
-            .epochs
-            .iter()
-            .filter(|e| {
-                e.0 < self.next_to_settle
-                    && self.epochs.get(&e.0).is_some_and(|r| r.status == EpochStatus::Succeeded)
-                    && !self.claimed.contains(&(e.0, account_id.clone()))
-            })
-            .copied()
-            .collect();
+        let profile = self.profiles.get(&account_id).cloned();
+        let floor_gain_bps = profile.as_ref().map(|p| {
+            // (H/B) / (h0/b0) in bps
+            U128(crate::math::mul3_div2(self.hearth, p.first_floor_b.0, BPS, self.backed(), p.first_floor_h.0))
+        });
         AccountView {
-            is_reviewer: self.is_reviewer(&account_id),
-            is_organizer: self.config.organizers.contains(&account_id),
-            verified_contributor: self.verified_at(&account_id, Self::now()),
-            can_attest: self.can_attest(&account_id),
-            good_balance: U128(self.token.accounts.get(&account_id).unwrap_or(0)),
+            good_balance: U128(self.good_balance(&account_id)),
             registered: self.token.accounts.contains_key(&account_id),
-            claimable_epochs,
-            stats,
+            is_cause: self.is_cause(&account_id),
+            profile,
+            floor_gain_bps,
             account: account_id,
         }
     }
 
-    /// Leaderboard source: accounts in first-seen order with their stats.
-    pub fn list_accounts(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<(AccountId, AccountStats)> {
-        page(from_index, limit, self.account_index.len())
-            .filter_map(|i| {
-                let a = self.account_index.get(i)?;
-                Some((a.clone(), self.stats.get(a).cloned().unwrap_or_default()))
-            })
-            .collect()
+    pub fn get_report(&self, week: U64) -> Option<Report> {
+        self.reports.get(&week.0).cloned()
     }
 
-    pub fn activity_count(&self) -> u32 {
-        self.activity.len()
+    pub fn check_invariants(&self) -> Invariants {
+        let storage = env::storage_usage() as u128 * env::storage_byte_cost().as_yoctonear();
+        let owed = self.hearth + self.escrow_open + self.payouts_owed + self.refunds_owed + self.carry_total + storage;
+        Invariants {
+            within_cap: self.total_minted + self.earmarked <= self.max_supply,
+            supply_equation: self.token.total_supply == self.total_minted - self.total_burned,
+            floor_never_decreased: floor_ge(self.hearth, self.backed(), self.hwm_h, self.hwm_b),
+            solvent: env::account_balance().as_yoctonear() >= owed,
+        }
     }
 
-    pub fn list_activity(&self, from_index: Option<u32>, limit: Option<u32>) -> Vec<Activity> {
-        page(from_index, limit, self.activity.len())
-            .filter_map(|i| self.activity.get(i).cloned())
-            .collect()
-    }
-
-    pub fn get_vesting(&self) -> Vec<VestingView> {
-        let now = Self::now();
-        self.config
-            .vesting
-            .iter()
-            .enumerate()
-            .map(|(i, v)| VestingView {
-                index: i as u32,
-                schedule: v.clone(),
-                vested: U128(self.vested_amount(i, now)),
-                claimed: U128(self.vesting_claimed[i]),
-            })
-            .collect()
+    /// Self-contained SVG of a fire, rendered from contract state only.
+    pub fn fire_card(&self, week: U64) -> String {
+        let f = self.fire_view(week.0);
+        let pct = if f.goal == 0 { 100 } else { (f.givers as u64 * 100 / f.goal as u64).min(100) };
+        let flame = 40 + pct * 140 / 100;
+        let color = match f.outcome {
+            Outcome::Caught => "#f97316",
+            Outcome::Smothered => "#6b7280",
+            Outcome::Open => "#fb923c",
+        };
+        let status = match f.outcome {
+            Outcome::Caught => "CAUGHT".to_string(),
+            Outcome::Smothered => "SMOTHERED".to_string(),
+            Outcome::Open => format!("{} / {} givers", f.givers, f.goal),
+        };
+        let floor = self.get_hearth().floor_yocto_per_good.0;
+        format!(
+            "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'>\
+<rect width='400' height='300' fill='#111827'/>\
+<path d='M200 {top} C240 {c1} 260 250 200 270 C140 250 160 {c1} 200 {top} Z' fill='{color}'/>\
+<text x='20' y='34' fill='#f9fafb' font-family='sans-serif' font-size='20'>GOODCOIN · fire {week}</text>\
+<text x='20' y='60' fill='#d1d5db' font-family='sans-serif' font-size='14'>{cause}</text>\
+<text x='20' y='285' fill='#f9fafb' font-family='sans-serif' font-size='16'>{status}</text>\
+<text x='380' y='285' fill='#9ca3af' font-family='sans-serif' font-size='12' text-anchor='end'>floor {floor} yN/GOOD</text>\
+</svg>",
+            top = 270 - flame,
+            c1 = 270 - flame / 2,
+            color = color,
+            week = week.0,
+            cause = xml_escape(&f.cause_name),
+            status = status,
+            floor = floor,
+        )
     }
 }
 
+fn xml_escape(s: &str) -> String {
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('\'', "&apos;").replace('"', "&quot;")
+}
+
 impl Contract {
-    fn submission_view(&self, s: &Submission) -> SubmissionView {
-        let now = Self::now();
-        let window_end = s.approved_at.map(|t| U64(t.0 + self.config.dispute_window_ns.0));
-        let finalized = s.finalized_at.is_some()
-            || (s.status == SubmissionStatus::Approved
-                && s.dispute_id.is_none()
-                && window_end.is_some_and(|w| now >= w.0));
-        SubmissionView { submission: s.clone(), finalized, dispute_window_ends_ns: window_end }
+    /// Cause fire `w` will burn for, assuming no further cause dies (rotation is deterministic).
+    pub(crate) fn projected_cause(&self, w: u64) -> u32 {
+        let mut c = self.pin.cause;
+        if self.extinguished || w <= self.pin.week.0 {
+            return c;
+        }
+        for _ in self.pin.week.0..w {
+            c = self.next_live_cause(c).unwrap_or(c);
+        }
+        c
     }
 
-    /// Reward per participant if epoch `e` succeeds, assuming all earlier unsettled epochs
-    /// settle as their current counts imply (exact once they are settled).
-    fn projected_reward(&self, e: u64) -> u128 {
-        let mut streak = self.streak;
-        for k in self.next_to_settle..e {
-            let r = self.epochs.get(&k).cloned().unwrap_or_default();
-            if r.approved_deeds >= self.config.deeds_target && r.participants >= self.config.participants_target {
-                streak += 1;
-            } else {
-                streak = 0;
-            }
-            if k > self.next_to_settle + 64 {
-                break;
-            }
+    fn fire_view(&self, w: u64) -> FireView {
+        let start = self.genesis_ns + w * self.week_ns();
+        let end = self.week_end(w);
+        let rec = self.fires.get(&w).cloned();
+        let (cause, base_goal, allowance) = match &rec {
+            Some(f) => (f.cause, f.base_goal, f.allowance.0),
+            None if self.pin.week.0 == w => (self.pin.cause, self.pin.base_goal, self.pin.allowance.0),
+            None => (self.projected_cause(w), self.pin.base_goal, 0),
+        };
+        let outcome = rec.as_ref().map(|f| f.outcome).unwrap_or(if w < self.next_to_settle {
+            Outcome::Smothered
+        } else {
+            Outcome::Open
+        });
+        let kindled = rec.as_ref().map(|f| f.kindled).unwrap_or(0);
+        let now = Self::now();
+        let c = &self.causes[cause as usize];
+        FireView {
+            week: U64(w),
+            start_ns: U64(start),
+            end_ns: U64(end),
+            cause,
+            cause_account: c.account.clone(),
+            cause_name: c.name.clone(),
+            base_goal,
+            kindled,
+            goal: base_goal.saturating_sub(kindled),
+            givers: rec.as_ref().map(|f| f.givers).unwrap_or(0),
+            total: rec.as_ref().map(|f| f.total).unwrap_or(U128(0)),
+            allowance: U128(allowance),
+            outcome,
+            minted: rec.as_ref().map(|f| f.minted).unwrap_or(U128(0)),
+            payout: rec.as_ref().map(|f| f.payout).unwrap_or(PayoutStatus::None),
+            settle_pending: self.next_to_settle < w,
+            rescue_window_open: outcome == Outcome::Open && now >= end - self.week_ns() / 10 && now < end,
         }
-        self.reward_for_streak(streak)
     }
 }

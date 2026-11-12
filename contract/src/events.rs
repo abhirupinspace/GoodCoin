@@ -1,53 +1,43 @@
-//! GOODCOIN protocol events (NEP-297, standard "goodcoin"). Token movements additionally emit the
-//! standard NEP-141 `ft_mint` / `ft_burn` / `ft_transfer` events.
+//! NEP-297 events, standard `goodcoin` (SPEC §7). Supply changes also emit NEP-141 `ft_mint`/`ft_burn`.
 use near_sdk::json_types::{U64, U128};
 use near_sdk::{AccountId, near};
 
-use crate::types::{Bucket, EpochStatus};
+use crate::types::{PayoutStatus, RefundKind};
 
 #[near(event_json(standard = "goodcoin"))]
-pub enum GoodEvent {
+pub enum Event {
     #[event_version("1.0.0")]
-    ChallengeCreated { challenge_id: u32, organizer: AccountId },
+    FireGift { week: U64, giver: AccountId, amount: U128, sparked_by: Option<AccountId>, bounty: U128 },
     #[event_version("1.0.0")]
-    ChallengePublished { challenge_id: u32 },
-    #[event_version("1.0.0")]
-    DeedSubmitted { submission_id: U64, challenge_id: u32, account: AccountId, evidence_hash: String },
-    #[event_version("1.0.0")]
-    Attested { submission_id: U64, attestor: AccountId, approve: bool },
-    #[event_version("1.0.0")]
-    DeedApproved { submission_id: U64, account: AccountId, epoch: U64 },
-    #[event_version("1.0.0")]
-    DeedRejected { submission_id: U64, account: AccountId },
-    #[event_version("1.0.0")]
-    DisputeOpened { dispute_id: U64, submission_id: U64, opener: AccountId },
-    #[event_version("1.0.0")]
-    DisputeVote { dispute_id: U64, reviewer: AccountId, valid: bool },
-    #[event_version("1.0.0")]
-    DisputeResolved { dispute_id: U64, submission_id: U64, upheld: bool },
-    #[event_version("1.0.0")]
-    EpochSettled {
-        epoch: U64,
-        status: EpochStatus,
-        approved_deeds: u32,
-        participants: u32,
-        reward_per_participant: U128,
-        reward_total: U128,
-        burned: U128,
-        unlocked: U128,
-        streak: u32,
-        longest_streak: u32,
+    FireCaught {
+        week: U64,
+        cause: AccountId,
+        givers: u32,
+        total: U128,
+        fee: U128,
+        minted: U128,
+        floor_h: U128,
+        floor_b: U128,
+        goal: u32,
     },
     #[event_version("1.0.0")]
-    RewardClaimed { epoch: U64, account: AccountId, amount: U128 },
+    FireSmothered { week: U64, givers: u32, total: U128, allowance_destroyed: U128, max_supply: U128 },
     #[event_version("1.0.0")]
-    VestingClaimed { schedule: u32, beneficiary: AccountId, amount: U128 },
+    Payout { week: U64, cause: AccountId, amount: U128, status: PayoutStatus },
     #[event_version("1.0.0")]
-    ProposalCreated { proposal_id: U64, proposer: AccountId, bucket: Bucket, amount: U128 },
+    CauseDead { cause: AccountId },
     #[event_version("1.0.0")]
-    ProposalVote { proposal_id: U64, voter: AccountId, support: bool },
+    Extinguished {},
     #[event_version("1.0.0")]
-    ProposalExecuted { proposal_id: U64, beneficiary: AccountId, amount: U128 },
+    Kindled { week: U64, burner: AccountId, cost: U128, goal: u32 },
     #[event_version("1.0.0")]
-    ProposalRejected { proposal_id: U64 },
+    Redeemed { account: AccountId, good: U128, near: U128 },
+    #[event_version("1.0.0")]
+    ClaimedGood { week: U64, account: AccountId, amount: U128 },
+    #[event_version("1.0.0")]
+    ClaimedNear { week: U64, account: AccountId, kind: RefundKind, amount: U128 },
+    #[event_version("1.0.0")]
+    Closed { week: U64, cancelled: U128 },
+    #[event_version("1.0.0")]
+    Report { week: U64, cause: AccountId, uri: String, sha256: String },
 }
