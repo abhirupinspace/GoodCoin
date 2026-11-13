@@ -149,6 +149,10 @@ tests/     golden trace replayed by both the simulator and the contract tests
 deploy/    make_config.py (demo / production), deploy.sh (deploy + seed + lock), e2e.sh (live run)
 ```
 
+## Roadmap
+
+- **v2: futarchy-selected causes.** Conditional decision markets choose the next fire's cause by the expected Hearth floor, replacing fixed rotation once markets are deep enough to resist manipulation. This is not part of the current contracts.
+
 ## Libraries and AI assistance
 
 Rust `near-sdk` / `near-contract-standards` 5.30.1, `uint`, `proptest`; Python numpy, matplotlib,
