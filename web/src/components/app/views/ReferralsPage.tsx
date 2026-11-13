@@ -51,7 +51,7 @@ function Rules() {
         {maxMove !== null && <> (at most <strong className="num">{nearFmt(maxMove, 3)}</strong> of weight)</>}, <strong>moves</strong> to you. That weight earns its share of the fire&apos;s GOOD if it catches.
       </li>
       <li>The weight comes out of the newcomer&apos;s share, not anyone else&apos;s, so total weight is unchanged and sparking yourself with fresh accounts gains nothing.</li>
-      <li><strong>Clicks earn nothing.</strong> Only a real first gift in a fire you are in. If the fire smothers, there is no GOOD to share — but the newcomer&apos;s first gift is used up anyway.</li>
+      <li><strong>Clicks earn nothing.</strong> Only a real first gift in a fire you are in. If the fire smothers, there is no GOOD to share, but the newcomer&apos;s first gift is still used up.</li>
     </ol>
   );
 }

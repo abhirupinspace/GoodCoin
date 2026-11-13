@@ -22,7 +22,7 @@ export default function TermsPage() {
           <p>The backing floor is denominated in NEAR. It is not a guaranteed market price or USD value. The value of NEAR itself can fall.</p>
         </>],
         ["No custody", <>
-          <p>We never hold your keys or your funds. You sign every transaction in your own wallet, and the contract — not us — holds escrows and the Hearth. Nobody, including the authors, can reverse, refund or move funds outside the contract&apos;s rules.</p>
+          <p>We never hold your keys or your funds. You sign every transaction in your own wallet, and the contract, not us, holds escrows and the Hearth. Nobody, including the authors, can reverse, refund or move funds outside the contract&apos;s rules.</p>
         </>],
         ["Information on this site", <>
           <p>Numbers are read live from the contract through public RPC providers and, for some account history, the NearBlocks indexer. These third parties can be slow, wrong or unavailable. The contract&apos;s state on-chain is the only authority. Cause reports are the causes&apos; own claims and are not verified by the protocol.</p>

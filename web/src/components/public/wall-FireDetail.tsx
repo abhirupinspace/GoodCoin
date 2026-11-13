@@ -116,7 +116,7 @@ export function WallFireDetail({ week }: { week: string }) {
           {/* cause report */}
           <section aria-labelledby="report">
             <h2 id="report" className="display text-4xl">The cause&apos;s report</h2>
-            <p className="eyebrow mt-2 text-red">Claim made by the recipient cause — not verified by the protocol</p>
+            <p className="eyebrow mt-2 text-red">Claim made by the recipient cause, not verified by the protocol</p>
             <div className="mt-4">
               {report.error ? (
                 <Notice tone="error" title="The report can't be read right now">{String(report.error)}</Notice>
@@ -162,7 +162,7 @@ export function WallFireDetail({ week }: { week: string }) {
             <p className="eyebrow mt-5 text-mustard">Claimed by the cause, not verified</p>
             <ul className="mt-2 space-y-1.5 text-sm text-paper/85">
               <li>• What the money funded (the report above, if any)</li>
-              <li>• The good actually done — the chain verifies a transfer, not impact</li>
+              <li>• The good actually done: the chain verifies a transfer, not impact</li>
             </ul>
             <p className="eyebrow mt-5 text-mustard">Check it yourself</p>
             <p className="mt-2 text-sm text-paper/80">The contract stores no transaction hashes. Every gift, settlement and payout is a transaction on the contract account:</p>

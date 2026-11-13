@@ -31,7 +31,7 @@ const ATTACKS: [string, string, string][] = [
 ];
 
 const LIMITS = [
-  ["A colluding cause can fake a catch.", "Its insiders give and get the 90% back off-chain. It costs them about 2% of the gifts for a small holder, and buys a fake streak — never GOOD below 1.25× the floor. Mitigated by curated DAO causes, fixed rotation and public flows. Not eliminated."],
+  ["A colluding cause can fake a catch.", "Its insiders give and get the 90% back off-chain. For a small holder that costs about 2% of the gifts and buys a fake streak, never GOOD below 1.25× the floor. Mitigated by curated DAO causes, fixed rotation and public flows. Not eliminated."],
   ["Accounts are not people.", "Giver counts can be faked at a minimum gift plus the record fee per fake giver. Without collusion, 90% of that still reaches the cause."],
   ["Giving is giving.", "At the floor, a giver's GOOD is worth about 8–9% of the gift on day one. It grows with every later fire that catches. It is not a return on the gift."],
   ["A smother destroys GOOD that was never minted.", "It lowers the maximum supply, not circulating supply. Weeks with no gifts also smother, so an idle protocol slowly lowers its own cap and goal."],
@@ -46,7 +46,7 @@ export default function SecurityPage() {
       <PageHero
         kicker="Security · threat model"
         title={<>No keys. <span className="text-red">No exceptions.</span></>}
-        intro={<p>The rules were fixed at deploy and nobody can change them — including us. The chain checks the money after every step. Here is the evidence, read live, and the limits we can&apos;t engineer away.</p>}
+        intro={<p>The rules were fixed at deploy. Nobody can change them, including us. The chain checks the money after every step. Here is the live evidence, and the limits we can&apos;t engineer away.</p>}
         art={<LockArt className="w-full max-w-xs" />}
       >
         <div className="flex flex-wrap gap-3"><Stamp tone="red">Not audited</Stamp><Stamp tone="ink">Testnet</Stamp></div>

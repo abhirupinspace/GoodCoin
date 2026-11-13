@@ -214,7 +214,7 @@ export function FireCharts() {
   const note = caught.length > shown.length ? ` (latest ${shown.length} of ${caught.length})` : "";
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <BarChart title={`Hearth fee per caught fire${note}`} source="list_fires: ⌊total × fee_bps ÷ 10,000⌋ for each caught fire — exact" unit="NEAR" color="#d66a32"
+      <BarChart title={`Hearth fee per caught fire${note}`} source="list_fires: ⌊total × fee_bps ÷ 10,000⌋ for each caught fire (exact)" unit="NEAR" color="#d66a32"
         rows={shown.map((f) => ({ label: `№${f.week}`, value: hearthFee(f.total, cfg.data!.fee_bps) }))} />
       <BarChart title={`GOOD issued per caught fire${note}`} source="list_fires: the minted field of each caught fire" unit="GOOD" color="#46543d"
         rows={shown.map((f) => ({ label: `№${f.week}`, value: BigInt(f.minted) }))} />

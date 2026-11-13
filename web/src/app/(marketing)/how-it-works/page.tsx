@@ -49,7 +49,7 @@ export default function HowItWorks() {
       <PageHero
         kicker="Public information pamphlet · No. 1"
         title={<>How the fire <span className="text-red">works.</span></>}
-        intro={<p>Everything GOODCOIN does, explained the way a public notice should be: plainly, in order, with the numbers read live from the contract. No formulas required — but they are here for the curious.</p>}
+        intro={<p>Everything GOODCOIN does, explained plainly and in order, with numbers read live from the contract. No formulas required, but they are here for the curious.</p>}
         art={<PamphletArt className="w-64 -rotate-3 drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] md:w-80" />}
       >
         <nav aria-label="Contents" className="frame max-w-2xl bg-paper p-5">
@@ -75,7 +75,7 @@ export default function HowItWorks() {
 
       <Chapter id="fire" no="02" kicker="One cause, one week" title="What is a weekly fire?" tone="dark"
         aside={<div className="frame-ember border-paper bg-charcoal p-6 sm:p-8"><LiveFire light compact /></div>}>
-        <p>A <b>fire</b> is a weekly campaign for one cause. It runs on a fixed schedule — on this deployment, each fire lasts <WeekLength /> — and has one goal: a number of <b>distinct givers</b>. This week&apos;s goal is <GoalNow />.</p>
+        <p>A <b>fire</b> is a weekly campaign for one cause. It runs on a fixed schedule (here, each fire lasts <WeekLength />) and has one goal: a number of <b>distinct givers</b>. This week&apos;s goal is <GoalNow />.</p>
         <p>The causes are a fixed list of DAO treasuries chosen at launch. They take turns in list order; nobody can choose, add or edit a cause, and no cause gets two weeks in a row unless it is the only one left.</p>
         <p>The goal moves with the community. After a fire catches on its own, next week&apos;s goal grows by about 10%. After a fire is smothered, it eases back by the same step. So the streak only survives if the circle keeps widening.</p>
         <Curious light>
@@ -92,10 +92,10 @@ export default function HowItWorks() {
           <div className="flex justify-between gap-4 py-2.5"><dt>Counts toward the goal</dt><dd className="font-bold">Once per account</dd></div>
         </dl></Box>}>
         <Steps items={[
-          <>You choose to give to <b>this week&apos;s fire and its cause</b>. Your gift names both, so it can never land in a fire you didn&apos;t choose — if the week has just turned over, the gift is rejected instead.</>,
+          <>You choose to give to <b>this week&apos;s fire and its cause</b>. Your gift names both, so it can never land in a fire you didn&apos;t choose. If the week has just turned over, the gift is rejected.</>,
           <>Your first gift of the week includes a small <Term def="A fixed fee paid once per account per fire. It pays for the on-chain storage your gift needs, and it is never refunded.">record fee</Term> of <RecordFee />. It pays for storage and is never refunded. Top-ups later in the week pay no fee.</>,
           <>Your total gift for the week must reach the minimum gift of <MinGift />. Every account that reaches it counts as one giver.</>,
-          <>Your NEAR waits in the contract until the week ends. Nobody can withdraw — not you, not anyone — so the giver count can&apos;t be faked by giving and pulling out at the last second.</>,
+          <>Your NEAR waits in the contract until the week ends. Nobody can withdraw it, you included, so the giver count can&apos;t be faked by giving and pulling out at the last second.</>,
           <>When the week ends, anyone can settle the fire. It either catches or is smothered. There is no third outcome and no judge.</>,
         ]} />
         <p className="text-base text-ink/70">Causes and the contract itself cannot give. Your weight in the fire is simply your total gift, adjusted only by the bring-a-friend rule below.</p>
@@ -144,7 +144,7 @@ export default function HowItWorks() {
 
       <Chapter id="hearth" no="07" kicker="What every fire leaves behind" title="How the Hearth works" tone="parchment"
         aside={<div className="frame bg-paper p-6"><HearthArt className="mx-auto w-full max-w-xs" /></div>}>
-        <p>The <b>Hearth</b> is the NEAR reserve inside the contract. It grows only from the 10% of fires that catch — there are no direct deposits.</p>
+        <p>The <b>Hearth</b> is the NEAR reserve inside the contract. It grows only from the 10% of fires that catch. There are no direct deposits.</p>
         <p>The <Term def="NEAR per GOOD that anyone can redeem at any time: the Hearth divided by all backed GOOD. It never decreases.">backing floor</Term> is the Hearth&apos;s NEAR divided by all backed GOOD (GOOD in wallets, GOOD set aside for givers who haven&apos;t claimed, and a locked seed nobody owns). Anyone can redeem GOOD for exactly that share at any time: no fee, no delay, no admin, even while old fires await settlement.</p>
         <div className="not-prose my-6 font-sans text-base"><HearthNumbers /></div>
         <table className="w-full border-collapse font-sans text-sm">
@@ -165,9 +165,9 @@ export default function HowItWorks() {
         <div className="halftone-ember absolute inset-y-0 left-0 w-1/3 opacity-15" aria-hidden />
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <p className="eyebrow text-mustard"><span className="mr-3">08 —</span>Follow the money</p>
+            <p className="eyebrow text-mustard"><span className="mr-3">08</span>Follow the money</p>
             <h2 className="display misprint-paper mt-3 text-5xl sm:text-6xl md:text-7xl">Work it out yourself.</h2>
-            <p className="mt-6 font-serif text-lg leading-relaxed text-paper/85">Pick a number of givers and a gift. The example runs the protocol&apos;s exact arithmetic — the same rounding the contract uses — against the Hearth as it stands right now, and shows where every NEAR goes.</p>
+            <p className="mt-6 font-serif text-lg leading-relaxed text-paper/85">Pick a number of givers and a gift. The example runs the protocol&apos;s exact arithmetic, with the contract&apos;s rounding, against the live Hearth and shows where every NEAR goes.</p>
             <p className="mt-4 font-serif text-lg leading-relaxed text-paper/85">Notice how small a giver&apos;s GOOD is next to the gift: about 8–9% of it at the floor. <b>Giving is giving.</b> The GOOD is a receipt that rises with every later fire that catches.</p>
           </div>
           <MoneyFlow />
@@ -189,7 +189,7 @@ export default function HowItWorks() {
         <Steps items={[
           <>Only in the <b>rescue window</b>: the last 10% of the week.</>,
           <>Only when the fire is a few givers short: at most a quarter of the goal (and always at least one).</>,
-          <>The first kindle costs <b>one gift&apos;s Hearth share</b> — 10% of a minimum gift — worth of GOOD at the floor. Each further kindle in the same fire costs twice the one before.</>,
+          <>The first kindle costs <b>one gift&apos;s Hearth share</b> (10% of a minimum gift) worth of GOOD at the floor. Each further kindle in the same fire costs twice the one before.</>,
           <>Burned GOOD is gone, and its share of the Hearth stays with everyone else, so the floor rises. Kindles are never refunded.</>,
           <>A rescued fire keeps the streak and lets its real gifts reach the cause, but it <b>never raises next week&apos;s goal</b>.</>,
         ]} />
@@ -202,14 +202,14 @@ export default function HowItWorks() {
 
       <Chapter id="referrals" no="10" kicker="Good spreads person to person" title="Bring a friend" tone="parchment"
         aside={<div className="frame bg-paper p-6"><HandsEmber className="h-48 w-full" /><p className="mt-4 text-center font-sans text-sm">The most a real friend can pass you: <b><SparkCap /></b> of weight.</p></div>}>
-        <p>When someone gives for the <b>first time ever</b>, they can name the person who brought them — their <b>spark</b>.</p>
+        <p>When someone gives for the <b>first time ever</b>, they can name the person who brought them: their <b>spark</b>.</p>
         <Steps items={[
           <>It only counts on the newcomer&apos;s first-ever gift. Later top-ups don&apos;t count.</>,
           <>The spark must already have given <b>earlier in the same fire</b>.</>,
-          <>A quarter of the newcomer&apos;s first-gift weight — counted up to 1.5 minimum gifts — <b>moves</b> from the newcomer to the spark. The newcomer keeps the rest.</>,
+          <>A quarter of the newcomer&apos;s first-gift weight (counted up to 1.5 minimum gifts) <b>moves</b> from the newcomer to the spark. The newcomer keeps the rest.</>,
           <>Newcomer status is used up even if that fire is later smothered.</>,
         ]} />
-        <p><b>Fake friends earn nothing.</b> The bounty comes out of the newcomer&apos;s own share, never anyone else&apos;s, so splitting yourself into fresh accounts that spark each other gains exactly nothing — and other givers are never diluted.</p>
+        <p><b>Fake friends earn nothing.</b> The bounty comes out of the newcomer&apos;s own share, never anyone else&apos;s, so splitting yourself into accounts that spark each other gains nothing. Other givers are never diluted.</p>
         <div className="pt-2"><Button href="/app/referrals" tone="dark">Your spark link</Button></div>
       </Chapter>
 

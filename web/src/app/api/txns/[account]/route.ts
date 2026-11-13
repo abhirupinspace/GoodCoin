@@ -28,7 +28,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ account
     const key = process.env.NEARBLOCKS_API_KEY;
     const url = `https://api-testnet.nearblocks.io/v3/accounts/${encodeURIComponent(account)}/txns?limit=50`;
     const res = await fetch(url, { headers: key ? { authorization: `Bearer ${key}` } : {}, signal: AbortSignal.timeout(8000) });
-    if (!res.ok) throw new Error(res.status === 429 ? "NearBlocks rate limit — try again shortly" : `NearBlocks ${res.status}`);
+    if (!res.ok) throw new Error(res.status === 429 ? "NearBlocks rate limit. Try again shortly" : `NearBlocks ${res.status}`);
     const json = (await res.json()) as { data?: NBTxn[] };
     const txns = (json.data ?? [])
       .filter((t) => t.receiver_account_id === CONTRACT)

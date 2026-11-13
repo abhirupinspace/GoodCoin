@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <p>The wallet connector may keep your session in your own browserYour wallet connection is kept in your own browser so you stay connected between visits. You can clear it by disconnecting or clearing site data.apos;s storage so you stay connected between visits. You can clear it by disconnecting or clearing site data.</p>
         </>],
         ["The blockchain is public", <>
-          <p>Every gift, claim, kindle, redemption and referral is a public transaction on NEAR, tied to your account name, and it cannot be deleted — by you, by us or by anyone. Choose an account name with that in mind.</p>
+          <p>Every gift, claim, kindle, redemption and referral is a public transaction on NEAR, tied to your account name, and nobody can delete it: not you, not us, not anyone. Choose an account name with that in mind.</p>
         </>],
         ["Third parties", <>
           <p>To read the chain, your browser and our server contact public NEAR RPC providers, and the explorer and account-history features use NearBlocks. Your wallet is provided by its own developer. Each of these sees your requests (including your IP address and the accounts you look up) under its own privacy policy.</p>

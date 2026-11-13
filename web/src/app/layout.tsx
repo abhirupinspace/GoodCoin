@@ -8,10 +8,10 @@ const archivo = Archivo({ subsets: ["latin"], variable: "--font-archivo", displa
 const baskerville = Libre_Baskerville({ subsets: ["latin"], weight: ["400", "700"], style: ["normal", "italic"], variable: "--font-baskerville", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "GOODCOIN — Make good contagious", template: "%s · GOODCOIN" },
+  title: { default: "GOODCOIN · Make good contagious", template: "%s · GOODCOIN" },
   description:
-    "Memecoins coordinate millions of people to buy. GOODCOIN coordinates them to give together. One cause, one community, one fire every week — on NEAR.",
-  openGraph: { title: "GOODCOIN — Make good contagious", description: "One cause. One community. One fire every week.", type: "website" },
+    "Memecoins coordinate millions of people to buy. GOODCOIN coordinates them to give together. One cause, one community, one fire every week, on NEAR.",
+  openGraph: { title: "GOODCOIN · Make good contagious", description: "One cause. One community. One fire every week.", type: "website" },
 };
 
 export const viewport: Viewport = { themeColor: "#24221e" };

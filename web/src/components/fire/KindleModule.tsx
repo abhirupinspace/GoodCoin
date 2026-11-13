@@ -23,7 +23,7 @@ export function KindleModule() {
       <p className="text-sm">Burn <strong>{goodFmt(cost.toString())}</strong> (one gift's Hearth share at the floor) to lower the goal by one giver. Burned GOOD is gone; the floor rises for everyone else. A rescued fire does not raise next week's goal.</p>
       {accountId && bal < cost && <p className="text-sm text-red">You hold {goodFmt(bal.toString())}, not enough to kindle.</p>}
       <Button tone="red" disabled={busy || (!!accountId && bal < cost)} onClick={() => run("kindle", { week: fire.data!.week }, "0", "Kindle")}>
-        {accountId ? `Kindle — burn ${goodFmt(cost.toString())}` : "Connect wallet to kindle"}
+        {accountId ? `Kindle: burn ${goodFmt(cost.toString())}` : "Connect wallet to kindle"}
       </Button>
     </div>
   );

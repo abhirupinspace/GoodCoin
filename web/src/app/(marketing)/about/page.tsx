@@ -14,7 +14,7 @@ const PRINCIPLES = [
   { no: "II", title: "No admin", body: "No owner, no setters, no pause, no upgrade method. Every key on the contract account was deleted after launch. The rules you read today are the rules for as long as the contract exists." },
   { no: "III", title: "The chain checks the money", body: "No judges, no oracles, no committee deciding what counts. The contract holds the gifts, counts the givers, pays the cause and backs the token. This website only reads what the contract reports." },
   { no: "IV", title: "Honest limits", body: "Accounts are not people. A colluding cause can fake a catch. The chain proves NEAR reached a curated account, not the good that was done. Your GOOD is worth a small fraction of your gift. We say so, everywhere." },
-  { no: "V", title: "Contagion over hype", body: "The only way the movement grows is if each week a few more people show up than last time. The goal ratchets up after every catch. Bringing a friend is the one reward we built in — and fake friends earn nothing." },
+  { no: "V", title: "Contagion over hype", body: "The only way the movement grows is if each week a few more people show up than last time. The goal ratchets up after every catch. Bringing a friend is the one reward we built in, and fake friends earn nothing." },
 ];
 
 export default function About() {
@@ -37,7 +37,7 @@ export default function About() {
       <article className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28">
         <div className="grid gap-14 lg:grid-cols-[1fr_0.75fr]">
           <div className="font-serif text-xl leading-relaxed text-ink/85">
-            <p className="eyebrow mb-6 font-sans text-burnt">01 — Why GOODCOIN exists</p>
+            <p className="eyebrow mb-6 font-sans text-burnt">01 Why GOODCOIN exists</p>
             <p className="first-letter:float-left first-letter:mr-3 first-letter:font-display first-letter:text-8xl first-letter:leading-[0.8] first-letter:text-red">
               A joke can get a million people to move in a week. What they move to do, almost always, is buy, hold and hope. The meme does nothing. It is a spectacular piece of coordination pointed at nothing at all.
             </p>
@@ -60,9 +60,9 @@ export default function About() {
         <div className="grid gap-14 lg:grid-cols-[0.75fr_1fr]">
           <div className="frame flex items-end justify-center bg-paper p-8"><MonumentalFlame className="h-72" /></div>
           <div className="font-serif text-xl leading-relaxed text-ink/85">
-            <p className="eyebrow mb-6 font-sans text-burnt">02 — Collective giving</p>
+            <p className="eyebrow mb-6 font-sans text-burnt">02 Collective giving</p>
             <p>An assurance contract is an old idea: I&apos;ll put in if enough of you do. It removes the fear of giving alone. GOODCOIN runs one every week, for one public good, with the money held by a contract nobody controls.</p>
-            <p className="mt-6">When the fire catches, nine-tenths goes to the cause&apos;s public DAO treasury. The last tenth goes into the Hearth, a shared reserve that backs the token the givers receive. Every later fire that catches strengthens that reserve. So the people who gave early have a stake in the people who give next — and a reason to bring them.</p>
+            <p className="mt-6">When the fire catches, nine-tenths goes to the cause&apos;s public DAO treasury. The last tenth goes into the Hearth, a shared reserve that backs the token the givers receive. Every later fire that catches strengthens it. So early givers have a stake in the people who give next, and a reason to bring them.</p>
             <p className="mt-6">When the fire doesn&apos;t catch, the gifts come home and that week&apos;s GOOD is struck from the record forever. Failure costs something, visibly, for everyone. That is the point: a movement should feel the weeks it didn&apos;t show up.</p>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function About() {
       {/* PRINCIPLES */}
       <section className="parchment border-y-[3px] border-ink" aria-labelledby="principles">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28">
-          <p className="eyebrow text-burnt">03 — Principles</p>
+          <p className="eyebrow text-burnt">03 Principles</p>
           <h2 id="principles" className="display misprint mt-3 text-6xl sm:text-7xl md:text-8xl">Five things we won&apos;t bend on.</h2>
           <ol className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {PRINCIPLES.map((p, i) => (
@@ -89,11 +89,11 @@ export default function About() {
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-28">
         <div className="grid gap-12 md:grid-cols-2">
           <div>
-            <p className="eyebrow text-burnt">04 — What this is not</p>
+            <p className="eyebrow text-burnt">04 What this is not</p>
             <h2 className="display misprint mt-3 text-5xl sm:text-6xl">Not an investment. Not a charity token. Not finished.</h2>
           </div>
           <div className="space-y-5 font-serif text-lg leading-relaxed text-ink/85">
-            <p>Giving is giving. At the backing floor, the GOOD you receive is worth about 8–9% of your gift on day one. It is a receipt that rises with every later fire that catches — measured in NEAR, not dollars, and never a promise of a market price.</p>
+            <p>Giving is giving. At the backing floor, the GOOD you receive is worth about 8–9% of your gift on day one. It is a receipt that rises with every later fire that catches. It is measured in NEAR, not dollars, and is never a promise of a market price.</p>
             <p>GOODCOIN is an experiment running on NEAR testnet. It has been through six independent adversarial design reviews and a full test suite, but no professional audit. The causes on testnet are demo DAOs run by the team, labelled as such.</p>
             <p>We would rather you understood it than believed in it. Read the rules, check the contract, then decide.</p>
             <div className="flex flex-wrap gap-3 pt-2">

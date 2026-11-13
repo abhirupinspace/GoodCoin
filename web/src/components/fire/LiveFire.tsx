@@ -61,7 +61,7 @@ export function LiveFire({ light = false, compact = false }: { light?: boolean; 
           <dt className={`eyebrow ${muted}`}>Status</dt>
           <dd className="mt-1 text-sm">
             {f.settle_pending
-              ? "Earlier fires await settlement — anyone can settle."
+              ? "Earlier fires await settlement. Anyone can settle."
               : short === 0
                 ? "Goal reached. It catches when the week ends."
                 : `${short} more giver${short > 1 ? "s" : ""} needed.`}

@@ -5,7 +5,7 @@ import { units } from "@/lib/format";
 import { kindleCost } from "@/lib/protocol";
 import { useConfig, useCurrentFire, useHearth, useSupply } from "@/lib/useQueries";
 
-const Dash = () => <span title="Unavailable right now">—</span>;
+const Dash = () => <span title="Unavailable right now">n/a</span>;
 const Wait = () => <Skeleton className="h-[0.9em] w-14 align-middle" />;
 
 /** Trims trailing zeros of a 24-decimal amount: 0.100 → 0.1. */

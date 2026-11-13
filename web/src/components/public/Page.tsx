@@ -34,7 +34,7 @@ export function Chapter({ id, no, title, kicker, children, tone = "paper", aside
     <section id={id} className={`relative scroll-mt-20 ${bg} ${className}`} aria-labelledby={id ? `${id}-title` : undefined}>
       <div className={`mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:py-24 ${aside ? "lg:grid-cols-[1.1fr_0.9fr]" : ""}`}>
         <div>
-          <p className={`eyebrow ${dark ? "text-mustard" : "text-burnt"}`}><span className="mr-3">{no} —</span>{kicker}</p>
+          <p className={`eyebrow ${dark ? "text-mustard" : "text-burnt"}`}><span className="mr-3">{no}</span>{kicker}</p>
           <h2 id={id ? `${id}-title` : undefined} className={`display mt-3 text-5xl sm:text-6xl md:text-7xl ${dark ? "misprint-paper" : "misprint"}`}>{title}</h2>
           <div className={`mt-6 space-y-4 font-serif text-lg leading-relaxed ${dark ? "text-paper/85" : "text-ink/85"}`}>{children}</div>
         </div>

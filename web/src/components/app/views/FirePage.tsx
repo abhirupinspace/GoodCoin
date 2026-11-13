@@ -118,7 +118,7 @@ export function FirePage() {
       <PageHeader
         eyebrow={current === null ? "Live from the contract" : `Fire №${current} · live from the contract`}
         title="The Fire"
-        intro="One fire, one cause, this week. Watch it, join it, and — in its final hours — help rescue it. Anyone can look; actions ask for a wallet."
+        intro="One fire, one cause, this week. Watch it, join it, and in its final hours, help rescue it. Anyone can look; actions ask for a wallet."
       />
       {error && <div className="mb-6"><QueryError what="Protocol stats" error={error} /></div>}
 
@@ -157,11 +157,11 @@ export function FirePage() {
           ) : <Loading />}
         </Card>
         <Card eyebrow="Last week" title="Previous fire">
-          {current === null ? <Loading /> : current === 0 ? <p className="text-sm text-ink/70">This is fire №0 — there is no previous fire yet.</p> : <PreviousFire week={String(current - 1)} />}
+          {current === null ? <Loading /> : current === 0 ? <p className="text-sm text-ink/70">This is fire №0. There is no previous fire yet.</p> : <PreviousFire week={String(current - 1)} />}
         </Card>
         <Card eyebrow="On-chain record" title="Recent fires">
           {current === null ? <Loading rows={4} /> : <RecentFires current={current} />}
-          <ContractLabel>Contract state via list_fires — not an event feed</ContractLabel>
+          <ContractLabel>Contract state via list_fires, not an event feed</ContractLabel>
         </Card>
       </div>
     </div>

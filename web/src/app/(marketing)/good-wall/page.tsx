@@ -15,7 +15,7 @@ export default function GoodWallPage() {
       <PageHero
         kicker="Permanent exhibition · read live from the contract"
         title={<>The Good <span className="text-red">Wall.</span></>}
-        intro={<p>Every fire stays on the record — the ones we kept alive and the ones that went out. Each card is a public campaign: who it burned for, how many showed up, and where the NEAR went.</p>}
+        intro={<p>Every fire stays on the record, the ones we kept alive and the ones that went out. Each card is a public campaign: who it burned for, how many showed up, and where the NEAR went.</p>}
         art={<ArchiveArt className="w-full max-w-sm" />}
       />
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 md:py-20">

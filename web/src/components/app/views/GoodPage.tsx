@@ -25,7 +25,7 @@ function Holdings({ accountId }: { accountId: string }) {
       <Stat label="Redeemable now" value={nearFmt(near, 4)} hint="⌊balance × H ÷ B⌋, exactly what redeem pays today" />
       <Stat
         label="Floor since your first gift"
-        value={gain === null ? "—" : bpsChange(gain)}
+        value={gain === null ? "n/a" : bpsChange(gain)}
         hint={gain === null || !acct.data.profile ? "You haven't given yet." : `Measured in NEAR since fire №${acct.data.profile.first_week}.`}
       />
     </div>

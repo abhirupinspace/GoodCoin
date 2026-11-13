@@ -91,7 +91,7 @@ function Spark({ accountId }: { accountId: string }) {
   if (error) return <QueryError what="Your profile" error={error} />;
   if (!data) return <Loading />;
   const p = data.profile;
-  if (!p) return <p className="text-sm text-ink/70">No profile yet — it is created by your first gift.</p>;
+  if (!p) return <p className="text-sm text-ink/70">No profile yet. Your first gift creates it.</p>;
   return (
     <dl className="grid gap-4 text-sm sm:grid-cols-3">
       <div><dt className="eyebrow text-ink/60">First gift</dt><dd className="display text-3xl">Fire №{p.first_week}</dd></div>

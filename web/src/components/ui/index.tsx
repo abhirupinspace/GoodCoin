@@ -150,7 +150,7 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
       }}
       className="eyebrow h-10 border-2 border-ink px-4 hover:bg-charcoal hover:text-paper"
     >
-      {state === "done" ? "Copied ✓" : state === "failed" ? "Copy failed — select manually" : label}
+      {state === "done" ? "Copied ✓" : state === "failed" ? "Copy failed. Select manually" : label}
     </button>
   );
 }

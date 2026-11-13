@@ -134,7 +134,7 @@ function WallCard({ fire }: { fire: FireView }) {
   return (
     <div>
       <FireCard fire={fire} />
-      {fire.outcome === "Open" && <p className="mt-2 text-xs text-ink/60">Burning, or ended and awaiting settlement — numbers are provisional.</p>}
+      {fire.outcome === "Open" && <p className="mt-2 text-xs text-ink/60">Burning, or ended and awaiting settlement. Numbers are provisional.</p>}
       {fire.outcome === "Smothered" && fire.givers === 0 && <p className="mt-2 text-xs text-ink/60">Nobody gave this week.</p>}
     </div>
   );

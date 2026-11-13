@@ -13,12 +13,12 @@ function summary(t: TxRow): string {
   const a = t.args ?? {};
   switch (t.method) {
     case "give": return `fire №${String(a.week ?? "?")}, cause #${String(a.cause ?? "?")}${a.sparked_by ? `, spark ${shortAccount(String(a.sparked_by), 24)}` : ""}`;
-    case "claim": return Array.isArray(a.weeks) ? `fires ${a.weeks.map((w) => `№${String(w)}`).join(", ")}` : "—";
+    case "claim": return Array.isArray(a.weeks) ? `fires ${a.weeks.map((w) => `№${String(w)}`).join(", ")}` : "n/a";
     case "kindle": case "payout": case "close": return `fire №${String(a.week ?? "?")}`;
-    case "redeem": return isAmount(a.amount) ? goodFmt(a.amount, 2) : "—";
+    case "redeem": return isAmount(a.amount) ? goodFmt(a.amount, 2) : "n/a";
     case "settle": return "settle ended fires";
     default: {
-      const s = t.args ? JSON.stringify(t.args) : "—";
+      const s = t.args ? JSON.stringify(t.args) : "n/a";
       return s.length > 80 ? `${s.slice(0, 80)}…` : s;
     }
   }
@@ -31,7 +31,7 @@ function Row({ t }: { t: TxRow }) {
       <td className="py-2.5 pr-3 text-xs text-ink/70 whitespace-nowrap">{dateFromNs(t.timestamp_ns)}</td>
       <td className="py-2.5 pr-3"><span className="display text-xl">{t.method ?? "unknown"}</span></td>
       <td className="py-2.5 pr-3 text-sm">{summary(t)}{t.signer !== t.receiver && <span className="block text-xs text-ink/50">signer {shortAccount(t.signer, 24)}</span>}</td>
-      <td className="num py-2.5 pr-3 text-right text-sm whitespace-nowrap">{dep.value === 0n ? "—" : `${dep.approx ? "≈ " : ""}${nearFmt(dep.value, 4)}`}</td>
+      <td className="num py-2.5 pr-3 text-right text-sm whitespace-nowrap">{dep.value === 0n ? "none" : `${dep.approx ? "≈ " : ""}${nearFmt(dep.value, 4)}`}</td>
       <td className="py-2.5 pr-3">{t.success === false ? <Pill tone="red">Failed</Pill> : t.success ? <Pill tone="forest">Success</Pill> : <Pill tone="muted">Unknown</Pill>}</td>
       <td className="py-2.5 text-right"><a href={txUrl(t.hash)} target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2" aria-label={`Transaction ${t.hash} on the explorer`}>{t.hash.slice(0, 8)}… ↗</a></td>
     </tr>

@@ -120,7 +120,7 @@ function Charts({ rows: all, headroom, max, mismatch, supply, config }: { rows: 
   ];
   const caught = all.filter((r) => r.fire.outcome === "Caught");
   const totalFees = caught.reduce((a, r) => a + r.fee, 0n);
-  const inflow: Point[] = rows.map((r) => ({ x: `№${r.week}`, y: toNum(r.fee), tone: r.fire.outcome === "Caught" ? "ember" : "ink", label: r.fire.outcome === "Caught" ? nearFmt(r.fee, 4) : "smothered — 0" }));
+  const inflow: Point[] = rows.map((r) => ({ x: `№${r.week}`, y: toNum(r.fee), tone: r.fire.outcome === "Caught" ? "ember" : "ink", label: r.fire.outcome === "Caught" ? nearFmt(r.fee, 4) : "smothered: 0" }));
   const givers: Point[] = rows.map((r) => ({ x: `№${r.week}`, y: r.fire.givers, tone: r.fire.outcome === "Caught" ? "forest" : "red", label: `${r.fire.givers} of ${r.fire.goal}${r.fire.kindled ? ` (${r.fire.kindled} kindled)` : ""}` }));
   const minMax = rows.reduce((m, r) => (r.maxSupply < m ? r.maxSupply : m), GENESIS_MAX);
   const maxMax = all.length <= SHOWN ? GENESIS_MAX : rows.reduce((m, r) => (r.maxSupply > m ? r.maxSupply : m), 0n);

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "Plain answers about giving, refunds, GOOD, the Hearth, kindling, bringing a friend, security and causes — including the honest limits.",
+  description: "Plain answers about giving, refunds, GOOD, the Hearth, kindling, bringing a friend, security and causes, including the honest limits.",
 };
 
 const GROUPS: { id: string; title: string; items: QA[] }[] = [
@@ -23,7 +23,7 @@ const GROUPS: { id: string; title: string; items: QA[] }[] = [
   {
     id: "giving", title: "Giving and refunds", items: [
       { q: "How much do I have to give?", a: <p>Your total gift in a fire must reach the minimum gift, currently <MinGift />. Your first gift of the week also pays a record fee of <RecordFee />, which pays for storage and is never refunded. Top-ups later in the same week pay no fee and don&apos;t count as an extra giver.</p> },
-      { q: "Can I take my gift back before the week ends?", a: <p>No. Gifts can&apos;t be withdrawn before the fire settles — by you or anyone. That is what makes the giver count trustworthy: nobody can give and pull out at the last second.</p> },
+      { q: "Can I take my gift back before the week ends?", a: <p>No. Nobody, you included, can withdraw a gift before the fire settles. That keeps the giver count honest: no giving and pulling out at the last second.</p> },
       { q: "What happens if the fire is smothered?", a: <p>You can claim a full refund of your gift; the record fee is kept because it already paid for storage. Refunds never expire. The week&apos;s allowance of GOOD is destroyed, so the maximum supply shrinks, the goal eases by one step, and the streak resets.</p> },
       { q: "What happens to my NEAR if the fire catches?", a: <p>90% is paid to the cause&apos;s DAO treasury, and 10% goes into the Hearth, which backs GOOD. You receive a share of the fire&apos;s new GOOD in proportion to your gift.</p> },
       { q: "What if the week ends just as I give?", a: <p>Every gift names its week and its cause. If the week has turned over, the gift is rejected rather than landing in a fire you didn&apos;t choose.</p> },
@@ -36,13 +36,13 @@ const GROUPS: { id: string; title: string; items: QA[] }[] = [
       { q: "How is GOOD created?", a: <p>Only when a fire catches. The 10% that goes into the Hearth buys new GOOD at no less than 1.25 times the backing floor, up to the week&apos;s allowance. Nothing else creates GOOD.</p> },
       { q: "Was any GOOD premined or given to the team?", a: <p>No premine, no team allocation, no vesting. There is one locked seed: 1 NEAR in the Hearth and a matching 1,000,000 GOOD recorded as an internal counter. It isn&apos;t in anyone&apos;s wallet, nobody owns it, and it can&apos;t be moved or redeemed. It keeps the floor defined from the first fire.</p> },
       { q: "When can I claim my GOOD?", a: <p>Any time after the fire settles, from <Link href="/app/claim">the claim page</Link>. GOOD from a caught fire can be claimed for 52 weeks; after that anyone may close the week, which cancels the unclaimed GOOD and lowers the maximum supply. NEAR refunds never expire.</p> },
-      { q: "What is the maximum supply?", a: <p>It started at 1,000,000,000 GOOD and can only decrease — when a fire is smothered, or when a week is closed. See the live figure on <Link href="/tokenomics">Tokenomics</Link>.</p> },
+      { q: "What is the maximum supply?", a: <p>It started at 1,000,000,000 GOOD and can only decrease: when a fire is smothered or a week is closed. See the live figure on <Link href="/tokenomics">Tokenomics</Link>.</p> },
     ],
   },
   {
     id: "hearth", title: "The Hearth", items: [
       { q: "What is the backing floor?", a: <p>The Hearth&apos;s NEAR divided by all backed GOOD. Anyone can redeem GOOD for exactly that much NEAR per GOOD, at any time, with no fee and no delay.</p> },
-      { q: "Can the floor go down?", a: <p>No — measured in NEAR. Catches, kindles and closed weeks raise it; redemptions and smothers leave it unchanged. The contract stores the highest floor reached and checks after every state change that it hasn&apos;t fallen.</p> },
+      { q: "Can the floor go down?", a: <p>No, not in NEAR. Catches, kindles and closed weeks raise it; redemptions and smothers leave it unchanged. The contract stores the highest floor reached and checks after every state change that it hasn&apos;t fallen.</p> },
       { q: "Is the floor a price guarantee?", a: <p><b>No.</b> The backing floor is denominated in NEAR. It is not a guaranteed market price or USD value. If NEAR falls in dollars, so does the floor in dollars.</p> },
       { q: "Who can take NEAR out of the Hearth?", a: <p>Nobody, except holders redeeming GOOD at the floor. There are no direct deposits and no admin withdrawals.</p> },
     ],
@@ -50,15 +50,15 @@ const GROUPS: { id: string; title: string; items: QA[] }[] = [
   {
     id: "kindle", title: "Kindle", items: [
       { q: "What is kindling?", a: <p>A rescue. In the last 10% of a week, when a fire is a few givers short, a GOOD holder can burn GOOD to lower this week&apos;s goal by one giver. <Link href="/how-it-works#kindle">Read the full rules.</Link></p> },
-      { q: "When is it allowed?", a: <p>Only in the rescue window (the last 10% of the week), only when the fire is at most a quarter of its goal short — always at least one; this week, <KindleReach /> — and never after every cause is dead.</p> },
+      { q: "When is it allowed?", a: <p>Only in the rescue window (the last 10% of the week), only when the fire is short by at most a quarter of its goal (always at least one; this week, <KindleReach />), and never after every cause is dead.</p> },
       { q: "What does it cost?", a: <p>The first kindle of a fire burns one gift&apos;s Hearth share (10% of a minimum gift) worth of GOOD at the floor. Each further kindle in the same fire costs twice the one before. Kindles are never refunded.</p> },
       { q: "Does a rescued fire raise next week's goal?", a: <p>No. A kindled catch keeps the streak and sends the real gifts to the cause, but the goal stays where it was. The cause still receives only real gifts.</p> },
     ],
   },
   {
     id: "referrals", title: "Referrals", items: [
-      { q: "How does bringing a friend work?", a: <p>When someone makes their first-ever gift and names you, and you already gave earlier in that same fire, a quarter of their first-gift weight — counted up to 1.5 minimum gifts — moves from them to you. At most <SparkCap /> of weight moves per friend.</p> },
-      { q: "Does my friend lose anything?", a: <p>Yes, a little of their share of that fire&apos;s GOOD — that is where your bounty comes from. They keep most of it, and the fire is more likely to catch.</p> },
+      { q: "How does bringing a friend work?", a: <p>When someone makes their first-ever gift and names you, and you already gave earlier in that same fire, a quarter of their first-gift weight (counted up to 1.5 minimum gifts) moves from them to you. At most <SparkCap /> of weight moves per friend.</p> },
+      { q: "Does my friend lose anything?", a: <p>Yes, a little of their share of that fire&apos;s GOOD. That is where your bounty comes from. They keep most of it, and the fire is more likely to catch.</p> },
       { q: "Can I refer myself with extra accounts?", a: <p>You can, but you gain exactly nothing. The bounty moves weight between the two accounts; total weight doesn&apos;t change. Fake friends earn nothing, and other givers are never diluted.</p> },
       { q: "Does sharing a link earn anything?", a: <p>No. Only a real first-ever gift, in a fire you already gave to, moves weight. Clicks don&apos;t count. Newcomer status is used up even if that fire later smothers.</p> },
     ],
@@ -66,8 +66,8 @@ const GROUPS: { id: string; title: string; items: QA[] }[] = [
   {
     id: "security", title: "Security", items: [
       { q: "Who controls the contract?", a: <p>Nobody. There is no owner, no setter, no pause and no upgrade method, and every access key on the contract account was deleted after launch. You can check the live key count on <Link href="/security">Security</Link>.</p> },
-      { q: "Has it been audited?", a: <p>No. It has a full contract test suite including a property test, a golden trace shared with an independent Python model, and a live testnet run — but no professional audit. It runs on testnet only.</p> },
-      { q: "Are giver counts real people?", a: <p>No — accounts are not people. Anyone can make extra accounts, each costing at least a minimum gift plus a record fee. Without collusion, 90% of that money still reaches the cause.</p> },
+      { q: "Has it been audited?", a: <p>No. It has a full contract test suite including a property test, a golden trace shared with an independent Python model, and a live testnet run, but no professional audit. It runs on testnet only.</p> },
+      { q: "Are giver counts real people?", a: <p>No. Accounts are not people. Anyone can make extra accounts, each costing at least a minimum gift plus a record fee. Without collusion, 90% of that money still reaches the cause.</p> },
       { q: "Can a cause cheat?", a: <p>A cause colluding with its insiders can fake a catch: they give, and the cause hands the 90% back off-chain. It costs them a slice of every fake fire and can push the goal up, but it can never buy GOOD below 1.25 times the floor. Curated DAO causes, fixed rotation and public flows make it harder. It is not eliminated.</p> },
       { q: "Should I trust this website?", a: <p>You don&apos;t have to. The site only reads the contract and never decides outcomes. Every number can be checked with the commands on <Link href="/docs">the docs page</Link>.</p> },
     ],
@@ -99,7 +99,7 @@ export default function Faq() {
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 md:py-24">
         {GROUPS.map((g, i) => (
           <section key={g.id} id={g.id} aria-labelledby={`${g.id}-h`} className="scroll-mt-20 pb-16 last:pb-0">
-            <p className="eyebrow text-burnt">{String(i + 1).padStart(2, "0")} —</p>
+            <p className="eyebrow text-burnt">{String(i + 1).padStart(2, "0")}</p>
             <h2 id={`${g.id}-h`} className="display misprint mt-2 text-5xl sm:text-6xl">{g.title}</h2>
             <div className="mt-6"><Accordion items={g.items} /></div>
           </section>

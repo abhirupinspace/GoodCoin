@@ -103,7 +103,7 @@ export function MoneyFlow() {
           <p className="mt-6 text-sm">
             {result.catches
               ? <>With <b>{result.n}</b> givers against this week&apos;s goal of <b>{result.goal}</b>, the fire <b className="text-forest">catches</b>.</>
-              : <>With <b>{result.n}</b> givers against this week&apos;s goal of <b>{result.goal}</b>, the fire would be <b className="text-red">smothered</b> — the numbers below show what happens <i>if</i> it catches.</>}
+              : <>With <b>{result.n}</b> givers against this week&apos;s goal of <b>{result.goal}</b>, the fire would be <b className="text-red">smothered</b>. The numbers below show what happens <i>if</i> it catches.</>}
           </p>
 
           {/* the split, drawn as a print bar */}
@@ -119,7 +119,7 @@ export function MoneyFlow() {
             <Out label="To the cause" value={`${trimUnits(result.pay, 4)} NEAR`} hint="Sent to the cause's DAO treasury by a permissionless payout." />
             <Out label="To the Hearth" value={`${trimUnits(result.fee, 4)} NEAR`} hint="Stays in the contract and backs every GOOD." />
             <Out label="GOOD issued" value={`${units(result.M, 0)} GOOD`} hint={result.capped ? "Capped by this week's allowance." : `Paid for at ${result.markup}× today's floor out of the Hearth's share.`} />
-            <Out label="One giver's share" value={`${units(result.each, 0)} GOOD`} hint={`Redeemable for about ${trimUnits(result.eachNear, 4)} NEAR right after the catch — about ${result.pct.toFixed(1)}% of the gift.`} />
+            <Out label="One giver's share" value={`${units(result.each, 0)} GOOD`} hint={`Redeemable for about ${trimUnits(result.eachNear, 4)} NEAR right after the catch, about ${result.pct.toFixed(1)}% of the gift.`} />
             <div>
               <dt className="eyebrow text-ink/60">Backing floor (NEAR per GOOD)</dt>
               <dd className="mt-1 font-sans">

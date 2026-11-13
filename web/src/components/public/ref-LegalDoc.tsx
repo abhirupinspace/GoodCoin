@@ -9,7 +9,7 @@ export function LegalDoc({ kicker, title, intro, sections }: { kicker: string; t
     <>
       <PageHero kicker={kicker} title={title} intro={intro} art={<ScalesArt className="w-full max-w-xs" />}>
         <div className="flex flex-wrap items-center gap-4">
-          <Stamp tone="red">Draft — not legal advice</Stamp>
+          <Stamp tone="red">Draft, not legal advice</Stamp>
           <p className="eyebrow text-ink/60">Effective 13 November 2026</p>
         </div>
       </PageHero>
