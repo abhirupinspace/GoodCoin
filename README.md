@@ -266,6 +266,15 @@ The [fire factory](factory/src/lib.rs) `fires-ab92.testnet` lets anyone launch t
 | Factory | [`fires-ab92.testnet`](https://testnet.nearblocks.io/address/fires-ab92.testnet), 0 keys, 8 unit tests |
 | Demo community fire (10-minute cycles, goal 3) | [`oss-sprint.fires-ab92.testnet`](https://testnet.nearblocks.io/address/oss-sprint.fires-ab92.testnet), 0 keys, created by [this transaction](https://testnet.nearblocks.io/txns/69qkTwBxifhyQRN96jPtKa2rmzYuNVJ784uXhhv5VWFY) |
 
+**Live run of the demo fire (2026-11-15).** No step needed a human click after the gifts:
+
+| Step | Result | Transaction |
+|---|---|---|
+| Created through the factory | locked, flagship code hash, 0.1 NEAR Hearth seed | [create_fire](https://testnet.nearblocks.io/txns/69qkTwBxifhyQRN96jPtKa2rmzYuNVJ784uXhhv5VWFY) |
+| 3 bots check in (0.105 NEAR each) | target 3 of 3 reached | [alice](https://testnet.nearblocks.io/txns/A3LCbqiW8oh6MsFrmvVQJFPvUVG3sbdSUn2pecNgDEgM), [bob](https://testnet.nearblocks.io/txns/Ad2R8gHGTYgD6JrJ3VyS6eBYvvF5nkQzNSvGuD6wGudv), [carol](https://testnet.nearblocks.io/txns/2Me4MySqkupzF8QCCyNjBa2DUBumCD4CqbKV5MshiXin) |
+| Cycle ends, keeper settles | caught; 24,000 GOOD minted to the givers; streak 1 | [settle](https://testnet.nearblocks.io/txns/3wqRWSB9a7VUMYmAA6b2M3M2K8YRR7vanWq3Hva52qM7) |
+| Keeper pays out | 90% to the open-source DAO; payout `Paid` | [payout](https://testnet.nearblocks.io/txns/7AJpE4EF2MYmYRoUvLVME3gD3NCoZLw6o7bRh7twPdTk) |
+
 ## Real time
 
 The chain stays the source of truth. [Neon](https://neon.tech) Postgres is a read mirror that anyone can rebuild from the contracts' events and views. Neon Realtime pushes every change to every open page.
