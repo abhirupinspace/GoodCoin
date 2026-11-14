@@ -12,7 +12,7 @@ export function SettleBar() {
   const due = data.due_weeks[0];
   if (behind <= 0 && !due) return null;
   return (
-    <div className="flex flex-wrap items-center gap-3 border-2 border-dashed border-ink/50 p-4">
+    <div className="flex flex-wrap items-center gap-3 border-2 border-dashed border-line p-4">
       <p className="flex-1 text-sm">
         {behind > 0 && <>{behind} ended fire{behind > 1 ? "s" : ""} await settlement. </>}
         {due && <>Fire №{due}'s payout is due. </>}

@@ -2,10 +2,10 @@
 // from exact BigInt data; a collapsible table always shows the underlying figures.
 import type { ReactNode } from "react";
 
-const INK = "#24221e";
-const EMBER = "#d66a32";
-const RED = "#a93428";
-const FOREST = "#46543d";
+const INK = "#f2efe9";
+const EMBER = "#e45a24";
+const RED = "#d62929";
+const FOREST = "#292929";
 const W = 1000;
 const H = 300;
 const PAD = { l: 40, r: 40, t: 16, b: 34 };
@@ -17,7 +17,7 @@ function Frame({ title, summary, children, table, legend }: { title: string; sum
   const hatch = `hatch-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
     <figure>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title}. ${summary}`} className="h-auto w-full border-2 border-ink bg-paper">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title}. ${summary}`} className="h-auto w-full border-2 border-line bg-paper">
         <defs>
           <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
             <line x1="0" y1="0" x2="0" y2="6" stroke={INK} strokeWidth="1" opacity="0.15" />
@@ -32,7 +32,7 @@ function Frame({ title, summary, children, table, legend }: { title: string; sum
       </figcaption>
       <details className="mt-2 text-sm">
         <summary className="eyebrow cursor-pointer text-ink/60 hover:text-ink">Show the numbers</summary>
-        <div className="mt-2 max-h-64 overflow-auto border-2 border-ink/20">{table}</div>
+        <div className="mt-2 max-h-64 overflow-auto border-2 border-line">{table}</div>
       </details>
     </figure>
   );
@@ -43,7 +43,7 @@ function Table({ head, rows }: { head: [string, string]; rows: [string, string][
     <table className="w-full text-left">
       <thead className="bg-parchment"><tr><th className="px-3 py-1.5">{head[0]}</th><th className="px-3 py-1.5 text-right">{head[1]}</th></tr></thead>
       <tbody className="num">
-        {rows.map(([a, b], i) => <tr key={i} className="border-t border-ink/10"><td className="px-3 py-1">{a}</td><td className="px-3 py-1 text-right">{b}</td></tr>)}
+        {rows.map(([a, b], i) => <tr key={i} className="border-t border-line"><td className="px-3 py-1">{a}</td><td className="px-3 py-1 text-right">{b}</td></tr>)}
       </tbody>
     </table>
   );

@@ -1,147 +1,122 @@
 @import "tailwindcss";
 
-/* ------------------------------------------------------------------ GOODCOIN print system
-   A restricted vintage ink palette. Cream / charcoal / ember are the primary combination. */
+/* ------------------------------------------------------------------ GOODCOIN · dark brutalist system
+   Token names are semantic and stable: `paper` = ground, `ink` = primary text, `line` = borders.
+   75–85% of every page is near-black. Red is a signal. Fire orange is reserved for the fire. */
 @theme {
-  --color-paper: #e8d9b9;
-  --color-parchment: #d4c19b;
-  --color-charcoal: #24221e;
-  --color-ink: #24221e;
-  --color-red: #a93428;
-  --color-ember: #d66a32;
-  --color-burnt: #a84b27;
-  --color-mustard: #c29a48;
-  --color-forest: #46543d;
-  --color-paper-dim: #c9b893;
+  --color-paper: #090909;       /* page ground */
+  --color-parchment: #111111;   /* secondary ground */
+  --color-charcoal: #111111;    /* dark band ground */
+  --color-raised: #181818;      /* elevated surface */
+  --color-ink: #f2efe9;         /* primary text */
+  --color-mute: #96928c;        /* secondary text */
+  --color-line: #292929;        /* borders */
+  --color-red: #d62929;         /* signal red */
+  --color-blood: #8e1717;       /* deep red */
+  --color-ember: #e45a24;       /* fire orange */
+  --color-burnt: #b94a25;       /* muted ember */
+  --color-mustard: #96928c;     /* legacy alias: metadata grey */
+  --color-forest: #e45a24;      /* legacy alias: positive state = the fire caught */
+  --color-paper-dim: #181818;
+  --color-ink-black: #090909;
 
-  --font-display: var(--font-bebas), "Oswald", "Arial Narrow", sans-serif;
-  --font-sans: var(--font-archivo), "IBM Plex Sans", system-ui, sans-serif;
-  --font-serif: var(--font-baskerville), Georgia, serif;
-  --font-hand: var(--font-patrick), "Comic Neue", cursive;
-  --color-ink-black: #292720;
+  --font-display: var(--font-anton), "Bebas Neue", Impact, sans-serif;
+  --font-sans: var(--font-grotesk), "Inter", system-ui, sans-serif;
+  --font-serif: var(--font-grotesk), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-hand: var(--font-plex-mono), ui-monospace, monospace;
 
+  --ease-cine: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-flicker: flicker 3.2s ease-in-out infinite;
   --animate-rise: rise 9s linear infinite;
-  --animate-reveal: reveal 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-reveal: reveal 0.9s var(--ease-cine) both;
 
   @keyframes flicker {
     0%, 100% { transform: scaleY(1) skewX(0deg); }
-    30% { transform: scaleY(1.025) skewX(-0.6deg); }
-    60% { transform: scaleY(0.985) skewX(0.5deg); }
+    30% { transform: scaleY(1.03) skewX(-0.8deg); }
+    60% { transform: scaleY(0.98) skewX(0.6deg); }
   }
   @keyframes rise {
     0% { transform: translateY(0) scale(1); opacity: 0; }
     10% { opacity: 0.9; }
-    100% { transform: translateY(-220px) scale(0.4); opacity: 0; }
+    100% { transform: translateY(-260px) scale(0.3); opacity: 0; }
   }
   @keyframes reveal {
-    from { opacity: 0; transform: translateY(14px); clip-path: inset(0 0 12% 0); }
-    to { opacity: 1; transform: none; clip-path: inset(0); }
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
   }
 }
 
 @layer base {
-  html { background: var(--color-paper); color: var(--color-ink); }
+  html { background: var(--color-paper); color: var(--color-ink); color-scheme: dark; }
   body {
     font-family: var(--font-sans);
     background-color: var(--color-paper);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-  ::selection { background: var(--color-ember); color: var(--color-paper); }
-  :focus-visible { outline: 3px solid var(--color-ember); outline-offset: 3px; }
+  /* Film grain over everything; fixed, never animated, never blocks input. */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0.07; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection { background: var(--color-red); color: var(--color-ink); }
+  :focus-visible { outline: 2px solid var(--color-ember); outline-offset: 3px; }
   h1, h2, h3 { text-wrap: balance; }
   p { text-wrap: pretty; }
+  input, select, textarea { color-scheme: dark; }
 }
 
 @layer components {
-  /* Aged paper: a very light fractal-noise grain, never heavy enough to hurt reading. */
-  .paper {
-    background-color: var(--color-paper);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .13 0 0 0 0 .11 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  .paper-dark {
-    background-color: var(--color-charcoal);
-    color: var(--color-paper);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .91 0 0 0 0 .85 0 0 0 0 .72 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
+  /* Grounds. `paper` / `paper-dark` / `parchment` are kept as names so every page inherits the system. */
+  .paper { background-color: var(--color-paper); }
+  .paper-dark { background-color: var(--color-parchment); color: var(--color-ink); }
   .parchment { background-color: var(--color-parchment); }
-  /* Halftone dot field, used as a background layer behind art. */
-  .halftone {
-    background-image: radial-gradient(circle, rgb(36 34 30 / 0.22) 1.1px, transparent 1.4px);
-    background-size: 7px 7px;
-  }
-  .halftone-ember {
-    background-image: radial-gradient(circle, rgb(214 106 50 / 0.5) 1.3px, transparent 1.7px);
-    background-size: 8px 8px;
-  }
-  /* Constructivist sunburst. */
-  .rays {
-    background: repeating-conic-gradient(from 0deg at 50% 100%, rgb(169 52 40 / 0.18) 0deg 6deg, transparent 6deg 12deg);
-  }
-  /* Screen-print misregistration on display type. */
-  .misprint { text-shadow: 3px 2px 0 rgb(169 52 40 / 0.55); }
-  .misprint-paper { text-shadow: 3px 2px 0 rgb(214 106 50 / 0.6); }
-  .display {
-    font-family: var(--font-display);
-    text-transform: uppercase;
-    letter-spacing: 0.01em;
-    line-height: 0.88;
-  }
-  .eyebrow {
-    font-family: var(--font-sans);
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-  .rule-double { border-top: 3px double currentColor; }
-  .frame { border: 2px solid var(--color-ink); box-shadow: 6px 6px 0 var(--color-ink); }
-  .frame-ember { border: 2px solid var(--color-ink); box-shadow: 6px 6px 0 var(--color-ember); }
-  .num { font-variant-numeric: tabular-nums; }
-}
+  .surface { background-color: var(--color-raised); }
+  /* Print textures, tuned for darkness. */
+  .halftone { background-image: radial-gradient(circle, rgb(242 239 233 / 0.09) 1px, transparent 1.3px); background-size: 6px 6px; }
+  .halftone-ember { background-image: radial-gradient(circle, rgb(214 41 41 / 0.45) 1.2px, transparent 1.6px); background-size: 7px 7px; }
+  .rays { background: none; }
+  .misprint, .misprint-paper { text-shadow: none; }
 
-@layer components {
-  /* ---------------------------------------------------------------- comic book system
-     Ink panels use a pseudo-element border passed through an SVG roughness filter, so the
-     line wobbles like hand inking while the panel content stays perfectly crisp. */
-  .ink-panel { position: relative; isolation: isolate; }
-  .ink-panel::after {
-    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
-    border: 3px solid var(--color-ink); filter: url(#ink-rough);
-  }
-  .ink-panel-thin::after { border-width: 2px; }
-  .ink-panel-paper::after { border-color: var(--color-paper); }
-  .ink-shadow { box-shadow: 7px 7px 0 var(--color-ink); }
-  .ink-shadow-ember { box-shadow: 7px 7px 0 var(--color-ember); }
-  /* Hand-lettered comic caption (narration box). */
-  .lettering { font-family: var(--font-hand); letter-spacing: 0.02em; text-transform: uppercase; }
-  .narration {
-    position: relative; display: inline-block; background: var(--color-mustard); color: var(--color-ink);
-    font-family: var(--font-hand); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.15;
-    padding: 0.55rem 0.85rem; box-shadow: 3px 3px 0 var(--color-ink);
-  }
-  .narration::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--color-ink); filter: url(#ink-rough); pointer-events: none; }
-  .narration-paper { background: var(--color-paper); }
-  /* Comic gutter grid. */
-  .gutter { gap: 1.1rem; }
-  /* Fading halftone edge, used to blend art into paper. */
-  .halftone-fade {
-    background-image: radial-gradient(circle, rgb(36 34 30 / 0.35) 1.2px, transparent 1.5px);
-    background-size: 7px 7px;
-    mask-image: linear-gradient(to bottom, transparent, black 60%);
-  }
-  /* Hand-drawn underline on hover. */
-  .ink-link { background-image: linear-gradient(var(--color-ember), var(--color-ember)); background-size: 0% 3px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.35s ease; }
-  .ink-link:hover { background-size: 100% 3px; }
-  /* Tactile press for buttons. */
-  .press { transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease, color 0.15s ease; box-shadow: 4px 4px 0 var(--color-ink); }
-  .stamp-in { animation: stamp-in 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
-  @keyframes stamp-in { from { transform: scale(1.9) rotate(-12deg); opacity: 0; } 70% { opacity: 1; } to { transform: scale(1) rotate(-3deg); opacity: 1; } }
-  .press:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--color-ink); }
-  .press:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--color-ink); }
+  /* Type. */
+  .display { font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.005em; line-height: 0.9; font-weight: 400; }
+  .mega { font-family: var(--font-display); text-transform: uppercase; line-height: 0.84; letter-spacing: -0.005em; font-size: clamp(3.4rem, 13.5vw, 15rem); }
+  .eyebrow, .meta { font-family: var(--font-mono); font-weight: 500; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
+  .lettering { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.75rem !important; }
+  .num { font-variant-numeric: tabular-nums; }
+  .rule-double { border-top: 1px solid var(--color-line); }
+
+  /* Frames: hairline borders, no drop shadows. */
+  .frame { border: 1px solid var(--color-line); background-color: var(--color-parchment); }
+  .frame-ember { border: 1px solid var(--color-line); border-top: 2px solid var(--color-ember); background-color: var(--color-parchment); }
+  .ink-panel { position: relative; border: 1px solid var(--color-line); }
+  .ink-shadow, .ink-shadow-ember { box-shadow: none; }
+  .narration { display: inline-block; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.75rem; color: var(--color-ink); border-left: 2px solid var(--color-red); padding: 0.2rem 0 0.2rem 0.75rem; }
+
+  /* Image treatments. Wrap an <img> in one of these. */
+  .img-mono img, img.img-mono { filter: grayscale(1) contrast(1.35) brightness(0.85); }
+  .img-red { position: relative; isolation: isolate; }
+  .img-red img { filter: grayscale(1) contrast(1.4) brightness(0.9); }
+  .img-red::after { content: ""; position: absolute; inset: 0; background: var(--color-red); mix-blend-mode: multiply; pointer-events: none; }
+  .img-fire img { filter: saturate(1.15) contrast(1.1); }
+  .vignette::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 40%, rgb(9 9 9 / 0.85) 100%); }
+  .fade-b::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(to bottom, transparent 45%, var(--color-paper) 100%); }
+
+  /* Links and buttons. */
+  .ink-link, .tlink { background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.35s var(--ease-cine), color 0.2s; }
+  .ink-link:hover, .tlink:hover { background-size: 100% 1px; }
+  .arrow { display: inline-block; transition: transform 0.3s var(--ease-cine); }
+  a:hover > .arrow, button:hover > .arrow { transform: translateX(4px); }
+  .press { transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.15s; }
+  .press:active { transform: translateY(1px); }
+  .stamp-in { animation: stamp-in 0.5s var(--ease-cine) both; }
+  @keyframes stamp-in { from { transform: scale(1.4); opacity: 0; } to { transform: none; opacity: 1; } }
+  .gutter { gap: 1px; }
+  .shell { margin-inline: auto; width: 100%; max-width: 88rem; padding-inline: 1rem; }
+  @media (min-width: 640px) { .shell { padding-inline: 2rem; } }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }

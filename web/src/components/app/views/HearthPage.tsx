@@ -28,7 +28,7 @@ function SupplyPanel() {
     ["Headroom", s.headroom, "Max supply − minted − earmarked. Each fire may create at most 0.25% of it."],
   ];
   return (
-    <dl className="divide-y divide-ink/15">
+    <dl className="divide-y divide-line">
       {rows.map(([k, v, d]) => (
         <div key={k} className="grid gap-1 py-2.5 sm:grid-cols-[10rem_1fr_auto] sm:items-baseline sm:gap-4">
           <dt className="eyebrow text-ink/70">{k}</dt>
@@ -53,7 +53,7 @@ function Invariants() {
   return (
     <ul className="space-y-2">
       {list.map(([k, label]) => (
-        <li key={k} className="flex items-center justify-between gap-3 border-b border-ink/15 pb-2">
+        <li key={k} className="flex items-center justify-between gap-3 border-b border-line pb-2">
           <span className="text-sm">{label}</span>
           {data[k] ? <Pill tone="forest">Holds ✓</Pill> : <Pill tone="red">Broken ✗</Pill>}
         </li>

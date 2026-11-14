@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Privacy", description: "Draft privac
 export default function PrivacyPage() {
   return (
     <LegalDoc
-      kicker="Legal · privacy"
+      kicker="Privacy"
       title="Privacy, plainly."
       intro={<p>The short version: this site keeps no personal data on its servers. The blockchain, however, is public and permanent.</p>}
       sections={[

@@ -69,10 +69,10 @@ function Claimer({ accountId }: { accountId: string }) {
         <fieldset>
           <legend className="sr-only">Fires to claim</legend>
           <div className="mb-3 flex flex-wrap gap-2 text-sm">
-            <button type="button" className="eyebrow border-2 border-ink px-3 py-1 hover:bg-parchment" onClick={() => setPicked(new Set(ordered.slice(0, MAX_WEEKS).map((i) => i.week)))}>Select {items.length > MAX_WEEKS ? `first ${MAX_WEEKS}` : "all"}</button>
-            <button type="button" className="eyebrow border-2 border-ink px-3 py-1 hover:bg-parchment" onClick={() => setPicked(new Set())}>Clear</button>
+            <button type="button" className="eyebrow border-2 border-line px-3 py-1 hover:bg-parchment" onClick={() => setPicked(new Set(ordered.slice(0, MAX_WEEKS).map((i) => i.week)))}>Select {items.length > MAX_WEEKS ? `first ${MAX_WEEKS}` : "all"}</button>
+            <button type="button" className="eyebrow border-2 border-line px-3 py-1 hover:bg-parchment" onClick={() => setPicked(new Set())}>Clear</button>
           </div>
-          <ul className="divide-y divide-ink/15">
+          <ul className="divide-y divide-line">
             {ordered.map((i) => <ItemRow key={i.week} item={i} checked={sel.has(i.week)} onToggle={() => toggle(i.week)} />)}
           </ul>
         </fieldset>
@@ -83,7 +83,7 @@ function Claimer({ accountId }: { accountId: string }) {
         <dl className="space-y-3 text-sm">
           <div className="flex justify-between gap-3"><dt>GOOD minted to you</dt><dd className="num font-semibold">{goodFmt(good, 2)}</dd></div>
           <div className="flex justify-between gap-3"><dt>NEAR refunded to you</dt><dd className="num font-semibold">{nearFmt(refund, 4)}{chosen.some((i) => i.maybeCarry) ? " + carry" : ""}</dd></div>
-          <div className="flex justify-between gap-3 border-t-2 border-ink pt-3"><dt>Attached deposit</dt><dd className="num font-semibold">{deposit === "0" ? "none" : nearFmt(deposit, 5)}</dd></div>
+          <div className="flex justify-between gap-3 border-t-2 border-line pt-3"><dt>Attached deposit</dt><dd className="num font-semibold">{deposit === "0" ? "none" : nearFmt(deposit, 5)}</dd></div>
         </dl>
         <ul className="mt-4 list-disc space-y-1.5 pl-5 text-sm text-ink/80">
           <li>One transaction claims up to {MAX_WEEKS} fires. Each fire&apos;s GOOD and refund can be claimed once.</li>
@@ -109,7 +109,7 @@ function ItemRow({ item, checked, onToggle }: { item: ClaimItem; checked: boolea
   return (
     <li className="py-3">
       <label htmlFor={id} className="flex cursor-pointer items-start gap-3">
-        <input id={id} type="checkbox" checked={checked} onChange={onToggle} className="mt-1.5 size-5 accent-[#d66a32]" />
+        <input id={id} type="checkbox" checked={checked} onChange={onToggle} className="mt-1.5 size-5 accent-[#e45a24]" />
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="display text-3xl text-burnt">№{item.week}</span>

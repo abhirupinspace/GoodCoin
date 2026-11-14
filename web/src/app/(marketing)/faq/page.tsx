@@ -1,9 +1,9 @@
+import { Hero } from "@/components/brand";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Accordion, type QA } from "@/components/public/Accordion";
 import { KindleReach, MinGift, RecordFee, SparkCap, WeekLength } from "@/components/public/LiveFacts";
-import { EndBand, PageHero } from "@/components/public/Page";
-import { MegaphoneArt } from "@/components/public/art";
+import { EndBand } from "@/components/public/Page";
 import { Button } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -85,16 +85,16 @@ const GROUPS: { id: string; title: string; items: QA[] }[] = [
 export default function Faq() {
   return (
     <>
-      <PageHero
-        kicker="Field guide"
-        title={<>Frequently asked <span className="text-red">questions.</span></>}
-        intro={<p>Straight answers, including the parts that aren&apos;t flattering. Live values are read from the contract.</p>}
-        art={<MegaphoneArt className="w-72 md:w-96" />}
+      <Hero
+        variant="poster"
+        marker={<>Field guide <span className="text-red">/</span> Questions</>}
+        lines={["No smoke.", <span key="b" className="text-red">Just signal.</span>]}
+        lede="Straight answers, including the unflattering ones."
       >
         <nav aria-label="FAQ sections" className="flex flex-wrap gap-2">
-          {GROUPS.map((g) => <a key={g.id} href={`#${g.id}`} className="eyebrow border-2 border-ink bg-paper px-3 py-2 hover:bg-charcoal hover:text-paper">{g.title}</a>)}
+          {GROUPS.map((g) => <a key={g.id} href={`#${g.id}`} className="meta border border-line px-3 py-2 text-mute transition-colors hover:border-ink hover:text-ink">{g.title}</a>)}
         </nav>
-      </PageHero>
+      </Hero>
 
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 md:py-24">
         {GROUPS.map((g, i) => (

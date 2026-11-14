@@ -1,3 +1,4 @@
+import { Hero } from "@/components/brand";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Crowd, HandsEmber, HearthArt, KindleArt, MonumentalFlame } from "@/components/art";
@@ -5,8 +6,7 @@ import { LiveFire } from "@/components/fire/LiveFire";
 import { HearthNumbers } from "@/components/hearth/HearthNumbers";
 import { GoalNow, KindleCostNow, KindleReach, MaxSupplyNow, MinGift, RecordFee, SparkCap, WeekLength } from "@/components/public/LiveFacts";
 import { MoneyFlow } from "@/components/public/MoneyFlow";
-import { Callout, Chapter, Curious, EndBand, PageHero } from "@/components/public/Page";
-import { PamphletArt } from "@/components/public/art";
+import { Callout, Chapter, Curious, EndBand } from "@/components/public/Page";
 import { Button, Stamp, Term } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ const CONTENTS = [
 ] as const;
 
 function Box({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
-  return <div className={`${dark ? "frame-ember border-paper bg-charcoal text-paper" : "frame parchment"} relative overflow-hidden p-6 font-sans sm:p-8`}>{children}</div>;
+  return <div className={`${dark ? "frame-ember border-line bg-charcoal text-ink" : "frame parchment"} relative overflow-hidden p-6 font-sans sm:p-8`}>{children}</div>;
 }
 
 function Steps({ items }: { items: React.ReactNode[] }) {
@@ -46,25 +46,26 @@ function Steps({ items }: { items: React.ReactNode[] }) {
 export default function HowItWorks() {
   return (
     <>
-      <PageHero
-        kicker="Chapter two · How it works"
-        title={<>How the fire <span className="text-red">works.</span></>}
-        intro={<p>Everything GOODCOIN does, explained plainly and in order, with numbers read live from the contract. No formulas required, but they are here for the curious.</p>}
-        art={<PamphletArt className="w-64 -rotate-3 drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] md:w-80" />}
+      <Hero
+        variant="split"
+        shot="neighbours"
+        marker={<>Chapter 02 <span className="text-red">/</span> The gathering</>}
+        lines={["One fire.", <span key="b" className="text-red">A thousand hands.</span>]}
+        h1Class="display text-[clamp(3.6rem,8.5vw,8.5rem)]"
+        lede="Every rule of GOODCOIN, in order. Live numbers from the contract. Formulas only for the curious."
       >
-        <nav aria-label="Contents" className="frame max-w-2xl bg-paper p-5">
-          <p className="eyebrow text-burnt">Contents</p>
-          <ol className="mt-3 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+        <nav aria-label="Contents" className="max-w-xl border-t border-line pt-5">
+          <ol className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
             {CONTENTS.map(([id, label], i) => (
               <li key={id}>
-                <a href={`#${id}`} className="group flex gap-3 text-sm font-semibold hover:text-burnt">
-                  <span className="num text-ember">{String(i + 1).padStart(2, "0")}</span><span className="group-hover:underline">{label}</span>
+                <a href={`#${id}`} className="group flex items-baseline gap-3 text-sm text-mute hover:text-ink">
+                  <span className="meta num text-red">{String(i + 1).padStart(2, "0")}</span><span className="tlink">{label}</span>
                 </a>
               </li>
             ))}
           </ol>
         </nav>
-      </PageHero>
+      </Hero>
 
       <Chapter id="what" no="01" kicker="The idea" title="What is GOODCOIN?"
         aside={<Box><Crowd count={6} className="h-36 w-full" /><p className="display mt-4 text-3xl">Three rules</p><ol className="mt-2 space-y-1 text-base"><li><b>1.</b> Give together.</li><li><b>2.</b> Get GOOD.</li><li><b>3.</b> Bring a friend.</li></ol></Box>}>
@@ -74,7 +75,7 @@ export default function HowItWorks() {
       </Chapter>
 
       <Chapter id="fire" no="02" kicker="One cause, one week" title="What is a weekly fire?" tone="dark"
-        aside={<div className="frame-ember border-paper bg-charcoal p-6 sm:p-8"><LiveFire light compact /></div>}>
+        aside={<div className="frame-ember border-line bg-charcoal p-6 sm:p-8"><LiveFire light compact /></div>}>
         <p>A <b>fire</b> is a weekly campaign for one cause. It runs on a fixed schedule (here, each fire lasts <WeekLength />) and has one goal: a number of <b>distinct givers</b>. This week&apos;s goal is <GoalNow />.</p>
         <p>The causes are a fixed list of DAO treasuries chosen at launch. They take turns in list order; nobody can choose, add or edit a cause, and no cause gets two weeks in a row unless it is the only one left.</p>
         <p>The goal moves with the community. After a fire catches on its own, next week&apos;s goal grows by about 10%. After a fire is smothered, it eases back by the same step. So the streak only survives if the circle keeps widening.</p>
@@ -85,7 +86,7 @@ export default function HowItWorks() {
       </Chapter>
 
       <Chapter id="giving" no="03" kicker="Throwing NEAR in" title="How giving works"
-        aside={<Box><p className="eyebrow text-burnt">At a glance</p><dl className="mt-3 divide-y divide-ink/20 border-y-2 border-ink text-sm">
+        aside={<Box><p className="eyebrow text-burnt">At a glance</p><dl className="mt-3 divide-y divide-line border-y-2 border-line text-sm">
           <div className="flex justify-between gap-4 py-2.5"><dt>Minimum gift (your total this week)</dt><dd className="font-bold"><MinGift /></dd></div>
           <div className="flex justify-between gap-4 py-2.5"><dt>Record fee (first gift of the week)</dt><dd className="font-bold"><RecordFee /></dd></div>
           <div className="flex justify-between gap-4 py-2.5"><dt>Withdraw before the week ends?</dt><dd className="font-bold">No</dd></div>
@@ -107,7 +108,7 @@ export default function HowItWorks() {
         <ul className="list-none space-y-3 font-sans text-base">
           <li className="border-l-4 border-forest pl-4"><b>90% goes to the cause.</b> Anyone can trigger the payout to the cause&apos;s DAO treasury. If the cause&apos;s account has disappeared, the NEAR is carried to the next fire that catches instead of being lost.</li>
           <li className="border-l-4 border-ember pl-4"><b>10% goes to the Hearth</b>, the reserve that backs every GOOD.</li>
-          <li className="border-l-4 border-ink pl-4"><b>Givers receive new GOOD</b>, shared by weight: give twice as much, receive twice as much. Each giver claims their own share.</li>
+          <li className="border-l-4 border-line pl-4"><b>Givers receive new GOOD</b>, shared by weight: give twice as much, receive twice as much. Each giver claims their own share.</li>
         </ul>
         <p>The streak grows by one, and unless the fire was rescued by a kindle, next week&apos;s goal grows too.</p>
       </Chapter>
@@ -125,12 +126,12 @@ export default function HowItWorks() {
       </Chapter>
 
       <Chapter id="issuance" no="06" kicker="Where GOOD comes from" title="How GOOD is issued" tone="dark"
-        aside={<div className="frame-ember border-paper bg-charcoal p-6 font-sans text-paper sm:p-8">
+        aside={<div className="frame-ember border-line bg-charcoal p-6 font-sans text-ink sm:p-8">
           <p className="eyebrow text-mustard">The only way GOOD is made</p>
           <ol className="mt-4 space-y-4">
-            <li><p className="display text-2xl text-ember">A fire catches</p><p className="text-sm text-paper/75">and puts 10% of its gifts in the Hearth.</p></li>
-            <li><p className="display text-2xl text-ember">That 10% buys new GOOD</p><p className="text-sm text-paper/75">at no less than 1.25× the backing floor.</p></li>
-            <li><p className="display text-2xl text-ember">Up to the allowance</p><p className="text-sm text-paper/75">0.25% of the GOOD that could still exist.</p></li>
+            <li><p className="display text-2xl text-ember">A fire catches</p><p className="text-sm text-ink/75">and puts 10% of its gifts in the Hearth.</p></li>
+            <li><p className="display text-2xl text-ember">That 10% buys new GOOD</p><p className="text-sm text-ink/75">at no less than 1.25× the backing floor.</p></li>
+            <li><p className="display text-2xl text-ember">Up to the allowance</p><p className="text-sm text-ink/75">0.25% of the GOOD that could still exist.</p></li>
           </ol>
         </div>}>
         <p>Nobody mints GOOD. It is created only when a fire catches, and it is <b>paid for</b>: the givers&apos; 10% that goes into the Hearth buys it, at a price of at least <b>1.25 times the backing floor</b>.</p>
@@ -149,8 +150,8 @@ export default function HowItWorks() {
         <div className="not-prose my-6 font-sans text-base"><HearthNumbers /></div>
         <table className="w-full border-collapse font-sans text-sm">
           <caption className="eyebrow mb-2 text-left text-ink/60">What happens to the floor</caption>
-          <thead><tr className="border-b-2 border-ink text-left"><th scope="col" className="py-2">Action</th><th scope="col" className="py-2">Floor</th></tr></thead>
-          <tbody className="divide-y divide-ink/20">
+          <thead><tr className="border-b-2 border-line text-left"><th scope="col" className="py-2">Action</th><th scope="col" className="py-2">Floor</th></tr></thead>
+          <tbody className="divide-y divide-line">
             <tr><td className="py-2">A fire catches</td><td className="py-2 font-bold text-forest">Rises</td></tr>
             <tr><td className="py-2">Someone redeems GOOD</td><td className="py-2 font-bold">Unchanged (rounds in the Hearth&apos;s favour)</td></tr>
             <tr><td className="py-2">A holder kindles, or a week is closed</td><td className="py-2 font-bold text-forest">Rises</td></tr>
@@ -167,8 +168,8 @@ export default function HowItWorks() {
           <div>
             <p className="eyebrow text-mustard"><span className="mr-3">08</span>Follow the money</p>
             <h2 className="display misprint-paper mt-3 text-5xl sm:text-6xl md:text-7xl">Work it out yourself.</h2>
-            <p className="mt-6 font-serif text-lg leading-relaxed text-paper/85">Pick a number of givers and a gift. The example runs the protocol&apos;s exact arithmetic, with the contract&apos;s rounding, against the live Hearth and shows where every NEAR goes.</p>
-            <p className="mt-4 font-serif text-lg leading-relaxed text-paper/85">Notice how small a giver&apos;s GOOD is next to the gift: about 8–9% of it at the floor. <b>Giving is giving.</b> The GOOD is a receipt that rises with every later fire that catches.</p>
+            <p className="mt-6 font-serif text-lg leading-relaxed text-ink/85">Pick a number of givers and a gift. The example runs the protocol&apos;s exact arithmetic, with the contract&apos;s rounding, against the live Hearth and shows where every NEAR goes.</p>
+            <p className="mt-4 font-serif text-lg leading-relaxed text-ink/85">Notice how small a giver&apos;s GOOD is next to the gift: about 8–9% of it at the floor. <b>Giving is giving.</b> The GOOD is a receipt that rises with every later fire that catches.</p>
           </div>
           <MoneyFlow />
         </div>
@@ -178,7 +179,7 @@ export default function HowItWorks() {
         aside={<Box>
           <KindleArt className="mx-auto h-36" />
           <p className="eyebrow mt-4 text-burnt">Cost at today&apos;s floor</p>
-          <dl className="mt-2 divide-y divide-ink/20 border-y-2 border-ink text-sm">
+          <dl className="mt-2 divide-y divide-line border-y-2 border-line text-sm">
             <div className="flex justify-between gap-4 py-2.5"><dt>1st kindle of a fire</dt><dd className="font-bold"><KindleCostNow j={0} /></dd></div>
             <div className="flex justify-between gap-4 py-2.5"><dt>2nd kindle</dt><dd className="font-bold"><KindleCostNow j={1} /></dd></div>
             <div className="flex justify-between gap-4 py-2.5"><dt>3rd kindle</dt><dd className="font-bold"><KindleCostNow j={2} /></dd></div>

@@ -7,8 +7,8 @@ export function ConnectButton({ tone = "dark" }: { tone?: "dark" | "light" }) {
   const { accountId, ready, connect, disconnect } = useNear();
   const [open, setOpen] = useState(false);
   const base = tone === "dark"
-    ? "bg-charcoal text-paper hover:bg-burnt"
-    : "bg-paper text-ink hover:bg-mustard";
+    ? "bg-charcoal text-ink hover:bg-burnt"
+    : "bg-paper text-ink hover:bg-red";
   if (!ready) return <span className={`eyebrow ${base} inline-flex h-10 items-center px-4 opacity-60`}>Wallet…</span>;
   if (!accountId)
     return (

@@ -2,6 +2,8 @@
 // One fire on the record. Contract-verified facts are kept apart from the cause's own claims.
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { Plate } from "@/components/brand";
+import { shotForWeek } from "@/components/brand/assets";
 import { Button, CopyButton, Notice, OutcomeStamp, Skeleton, Stamp, Term } from "@/components/ui";
 import { CONTRACT, accountUrl } from "@/lib/config";
 import { compact, dateFromNs, goodFmt, nearFmt } from "@/lib/format";
@@ -70,7 +72,7 @@ export function WallFireDetail({ week }: { week: string }) {
 
   return (
     <Wrap>
-      <Header f={f} stamp={stamp} />
+      <Header f={f} stamp={stamp} live={phase === "burning"} />
       {phase === "burning" && (
         <div className="mt-8 max-w-3xl"><Notice title="This fire is still burning">The numbers below are live and provisional. <Link className="underline" href="/app">Join it in the app →</Link></Notice></div>
       )}
@@ -82,7 +84,7 @@ export function WallFireDetail({ week }: { week: string }) {
         <div className="min-w-0 space-y-10">
           {/* the numbers */}
           <section aria-labelledby="facts">
-            <h2 id="facts" className="display text-4xl">The record</h2>
+            <h2 id="facts" className="display text-4xl text-ink">The record</h2>
             <div className="mt-4">
               <Ledger rows={[
                 ["Fire ID", <span key="id">№{f.week}</span>],
@@ -106,7 +108,7 @@ export function WallFireDetail({ week }: { week: string }) {
               ]} />
             </div>
             {caught && (
-              <div className="mt-5 flex items-start gap-4 border-2 border-ink p-4">
+              <div className="mt-5 flex items-start gap-4 border-2 border-line p-4">
                 <Stamp tone={p.tone}>{p.label}</Stamp>
                 <p className="text-sm">{p.text}{f.payout === "Carried" && cause?.dead ? " The cause is marked dead in get_causes." : ""}</p>
               </div>
@@ -150,9 +152,9 @@ export function WallFireDetail({ week }: { week: string }) {
           </section>
 
           <section aria-labelledby="evidence" className="paper-dark frame-ember p-5 sm:p-6">
-            <h2 id="evidence" className="display text-4xl text-paper">On-chain evidence</h2>
+            <h2 id="evidence" className="display text-4xl text-ink">On-chain evidence</h2>
             <p className="eyebrow mt-4 text-mustard">Verified by the contract</p>
-            <ul className="mt-2 space-y-1.5 text-sm text-paper/85">
+            <ul className="mt-2 space-y-1.5 text-sm text-ink/85">
               <li>✓ Givers, goal, kindles and total, recorded by <code className="font-mono">give</code> and <code className="font-mono">kindle</code></li>
               <li>✓ Outcome, fixed once by <code className="font-mono">settle</code> when the week ended</li>
               {caught && <li>✓ Hearth fee, GOOD issued, and payout status ({p.label})</li>}
@@ -160,22 +162,22 @@ export function WallFireDetail({ week }: { week: string }) {
               <li>✓ The recipient is a fixed, curated cause account</li>
             </ul>
             <p className="eyebrow mt-5 text-mustard">Claimed by the cause, not verified</p>
-            <ul className="mt-2 space-y-1.5 text-sm text-paper/85">
+            <ul className="mt-2 space-y-1.5 text-sm text-ink/85">
               <li>• What the money funded (the report above, if any)</li>
               <li>• The good actually done: the chain verifies a transfer, not impact</li>
             </ul>
             <p className="eyebrow mt-5 text-mustard">Check it yourself</p>
-            <p className="mt-2 text-sm text-paper/80">The contract stores no transaction hashes. Every gift, settlement and payout is a transaction on the contract account:</p>
+            <p className="mt-2 text-sm text-ink/80">The contract stores no transaction hashes. Every gift, settlement and payout is a transaction on the contract account:</p>
             <div className="mt-3 flex flex-wrap gap-3">
-              <a href={accountUrl(CONTRACT)} target="_blank" rel="noreferrer" className="eyebrow border-2 border-paper px-3 py-2 hover:bg-paper hover:text-ink">Contract transactions ↗</a>
-              <a href={accountUrl(f.cause_account)} target="_blank" rel="noreferrer" className="eyebrow border-2 border-paper px-3 py-2 hover:bg-paper hover:text-ink">Cause account ↗</a>
+              <a href={accountUrl(CONTRACT)} target="_blank" rel="noreferrer" className="eyebrow border-2 border-line px-3 py-2 hover:bg-paper hover:text-ink">Contract transactions ↗</a>
+              <a href={accountUrl(f.cause_account)} target="_blank" rel="noreferrer" className="eyebrow border-2 border-line px-3 py-2 hover:bg-paper hover:text-ink">Cause account ↗</a>
             </div>
-            <pre className="mt-4 overflow-x-auto bg-ink/60 p-3 text-xs text-paper/90"><code>{`near contract call-function as-read-only ${CONTRACT} get_fire json-args '{"week":"${f.week}"}' network-config testnet now`}</code></pre>
+            <pre className="mt-4 overflow-x-auto border border-line bg-raised p-3 text-xs text-ink/90"><code>{`near contract call-function as-read-only ${CONTRACT} get_fire json-args '{"week":"${f.week}"}' network-config testnet now`}</code></pre>
           </section>
         </aside>
       </div>
 
-      <div className="mt-16 flex flex-wrap gap-3 border-t-[3px] border-double border-ink pt-8">
+      <div className="mt-16 flex flex-wrap gap-3 border-t border-line pt-8">
         {w > 0n && <Button href={`/good-wall/${w - 1n}`} tone="outline">← Fire №{String(w - 1n)}</Button>}
         {w < BigInt(s.current_week) && <Button href={`/good-wall/${w + 1n}`} tone="outline">Fire №{String(w + 1n)} →</Button>}
         <Button href="/good-wall" tone="dark">All fires</Button>
@@ -201,16 +203,23 @@ function FireCardImage({ week }: { week: string }) {
   );
 }
 
-function Header({ f, stamp }: { f: FireView; stamp: ReactNode }) {
+/** Fire hero: full-bleed, image-led. Caught fires keep their flame in colour; others print in grey. */
+function Header({ f, stamp, live = false }: { f: FireView; stamp: ReactNode; live?: boolean }) {
+  const caught = f.outcome === "Caught";
   return (
-    <header>
-      <p className="eyebrow text-burnt"><Link href="/good-wall" className="hover:underline">Good Wall</Link> · Exhibit</p>
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-6">
-        <div className="min-w-0">
-          <h1 className="display misprint text-[clamp(4rem,14vw,10rem)]">Fire №{f.week}</h1>
-          <p className="display mt-2 text-3xl text-burnt sm:text-4xl">{f.cause_name}</p>
+    <header className="relative left-1/2 -mt-14 mb-4 w-screen -translate-x-1/2 overflow-hidden border-b border-line md:-mt-20">
+      <Plate shot={shotForWeek(Number(f.week))} treatment={caught || live ? "fire" : "mono"} priority className={`absolute inset-0 md:left-[45%] ${caught || live ? "" : "opacity-50"}`} sizes="60vw" />
+      <div className="absolute inset-0 bg-gradient-to-t from-paper via-paper/60 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/70" aria-hidden />
+      <div className="shell relative pb-14 pt-24 md:pb-20 md:pt-32">
+        <p className="meta text-mute"><Link href="/good-wall" className="tlink hover:text-ink">Good Wall</Link> <span className="text-red">/</span> Exhibit</p>
+        <h1 className="mega mt-6 text-ink">Fire <span className="text-red">{f.week}</span></h1>
+        <p className="display mt-4 max-w-3xl text-4xl text-ink sm:text-5xl">{f.cause_name}</p>
+        <div className="mt-8 flex flex-wrap items-center gap-4">
+          {stamp}
+          <span className="meta text-mute">{f.givers} / {f.goal} givers</span>
+          <span className="meta text-mute">{nearFmt(f.total, 2)} given</span>
         </div>
-        <div className="scale-150 pb-4 pr-6">{stamp}</div>
+        {live && <div className="mt-10"><Button href="/app" size="lg">Join this fire <span className="arrow">→</span></Button></div>}
       </div>
     </header>
   );

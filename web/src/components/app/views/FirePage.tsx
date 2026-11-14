@@ -61,7 +61,7 @@ function PreviousFire({ week }: { week: string }) {
         </div>
         <FireOutcome fire={f} stats={stats} />
       </div>
-      <dl className="mt-4 grid grid-cols-2 gap-3 border-t-2 border-ink pt-3 text-sm">
+      <dl className="mt-4 grid grid-cols-2 gap-3 border-t-2 border-line pt-3 text-sm">
         <div><dt className="eyebrow text-ink/60">Givers / goal</dt><dd className="num font-semibold">{f.givers} / {f.goal}</dd></div>
         <div><dt className="eyebrow text-ink/60">Committed</dt><dd className="num font-semibold">{nearFmt(f.total, 2)}</dd></div>
         {f.outcome === "Caught" && <div><dt className="eyebrow text-ink/60">GOOD for givers</dt><dd className="num font-semibold">{goodFmt(f.minted)}</dd></div>}
@@ -84,12 +84,12 @@ function RecentFires({ current }: { current: number }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[520px] text-left text-sm">
-        <thead className="eyebrow border-b-2 border-ink text-ink/60">
+        <thead className="eyebrow border-b-2 border-line text-ink/60">
           <tr><th className="py-2 pr-3">Fire</th><th className="py-2 pr-3">Cause</th><th className="py-2 pr-3 text-right">Givers / goal</th><th className="py-2 pr-3 text-right">Committed</th><th className="py-2 text-right">Outcome</th></tr>
         </thead>
         <tbody className="num">
           {rows.map((f) => (
-            <tr key={f.week} className="border-b border-ink/15">
+            <tr key={f.week} className="border-b border-line">
               <td className="py-2 pr-3"><Link href={`/good-wall/${f.week}`} className="display text-2xl text-burnt hover:underline">№{f.week}</Link></td>
               <td className="py-2 pr-3">{f.cause_name}</td>
               <td className="py-2 pr-3 text-right">{f.givers} / {f.goal}</td>

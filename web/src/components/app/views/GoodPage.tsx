@@ -64,7 +64,7 @@ function Rewards({ accountId }: { accountId: string }) {
   const caught = hist.data.entries.filter((e) => e.fire.outcome === "Caught");
   if (caught.length === 0) return <Notice tone="empty" title="No GOOD earned yet">GOOD is created only when a fire you gave to catches.</Notice>;
   return (
-    <ul className="divide-y divide-ink/15">
+    <ul className="divide-y divide-line">
       {caught.map((e) => (
         <li key={e.week} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
           <Link href={`/good-wall/${e.week}`} className="min-w-0"><span className="display text-2xl text-burnt">№{e.week}</span> <span className="text-sm">{e.fire.cause_name}</span></Link>
@@ -91,7 +91,7 @@ function Burns({ accountId }: { accountId: string }) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-ink/70">No redemptions or kindles in your indexed transactions.</p>
       ) : (
-        <ul className="divide-y divide-ink/15">
+        <ul className="divide-y divide-line">
           {rows.map((t) => (
             <li key={t.hash} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
               <span>
@@ -126,7 +126,7 @@ export function GoodPage() {
           <div className="space-y-8">
             <Card>
               <Holdings accountId={a} />
-              <div className="mt-6 flex flex-wrap gap-3 border-t-2 border-ink pt-5">
+              <div className="mt-6 flex flex-wrap gap-3 border-t-2 border-line pt-5">
                 <Button href="/app/redeem" tone="dark">Redeem for NEAR</Button>
                 <Button href="/app/claim" tone="outline">Claim</Button>
               </div>

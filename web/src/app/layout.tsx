@@ -1,13 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Bebas_Neue, Libre_Baskerville, Patrick_Hand } from "next/font/google";
-import { InkFilterDefs } from "@/components/comic/InkFilterDefs";
+import { Anton, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
-const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", variable: "--font-bebas", display: "swap" });
-const archivo = Archivo({ subsets: ["latin"], variable: "--font-archivo", display: "swap" });
-const patrick = Patrick_Hand({ subsets: ["latin"], weight: "400", variable: "--font-patrick", display: "swap" });
-const baskerville = Libre_Baskerville({ subsets: ["latin"], weight: ["400", "700"], style: ["normal", "italic"], variable: "--font-baskerville", display: "swap" });
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton", display: "swap" });
+const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "GOODCOIN · Make good contagious", template: "%s · GOODCOIN" },
@@ -16,13 +14,12 @@ export const metadata: Metadata = {
   openGraph: { title: "GOODCOIN · Make good contagious", description: "One cause. One community. One fire every week.", type: "website" },
 };
 
-export const viewport: Viewport = { themeColor: "#24221e" };
+export const viewport: Viewport = { themeColor: "#090909" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bebas.variable} ${archivo.variable} ${baskerville.variable} ${patrick.variable}`}>
-      <body className="paper min-h-screen">
-        <InkFilterDefs />
+    <html lang="en" className={`${anton.variable} ${grotesk.variable} ${plexMono.variable}`}>
+      <body className="min-h-screen">
         <Providers>{children}</Providers>
       </body>
     </html>

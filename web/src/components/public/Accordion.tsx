@@ -10,12 +10,12 @@ export function Accordion({ items, headingLevel = 3 }: { items: QA[]; headingLev
   const H = `h${headingLevel}` as "h3";
   const toggle = (i: number) => setOpen((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
   return (
-    <div className="border-t-2 border-ink">
+    <div className="border-t-2 border-line">
       {items.map((it, i) => {
         const isOpen = open.has(i);
         const btn = `${base}-q${i}`, panel = `${base}-a${i}`;
         return (
-          <div key={i} className="border-b-2 border-ink">
+          <div key={i} className="border-b-2 border-line">
             <H className="m-0">
               <button id={btn} type="button" aria-expanded={isOpen} aria-controls={panel} onClick={() => toggle(i)}
                 className="flex w-full items-start justify-between gap-6 py-4 text-left font-sans text-lg font-semibold hover:text-burnt">

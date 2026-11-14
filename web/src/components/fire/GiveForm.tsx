@@ -51,9 +51,9 @@ export function GiveForm() {
             id="amount" inputMode="decimal" autoComplete="off" placeholder={nearFmt(suggested, 3).replace(" NEAR", "")}
             value={amount} onChange={(e) => setAmount(e.target.value)} onBlur={() => setTouched(true)}
             aria-invalid={!!error} aria-describedby="amount-help"
-            className="display num h-14 w-full border-2 border-ink bg-paper px-4 text-3xl outline-none focus:border-ember"
+            className="display num h-14 w-full border-2 border-line bg-paper px-4 text-3xl outline-none focus:border-ember"
           />
-          <button type="button" className="eyebrow border-2 border-ink px-3 hover:bg-parchment" onClick={() => { setAmount(units(suggested, 3).replace(/,/g, "")); setTouched(true); }}>
+          <button type="button" className="eyebrow border-2 border-line px-3 hover:bg-parchment" onClick={() => { setAmount(units(suggested, 3).replace(/,/g, "")); setTouched(true); }}>
             Min
           </button>
         </div>
@@ -66,7 +66,7 @@ export function GiveForm() {
       <div>
         <label htmlFor="spark" className="eyebrow">Brought here by (optional)</label>
         <input id="spark" value={spark} onChange={(e) => setSpark(e.target.value)} placeholder="friend.testnet"
-          className="mt-2 h-11 w-full border-2 border-ink bg-paper px-3 outline-none focus:border-ember" />
+          className="mt-2 h-11 w-full border-2 border-line bg-paper px-3 outline-none focus:border-ember" />
         <p className="mt-1 text-xs text-ink/60">Counts only on your first-ever gift, and only if they gave earlier in this same fire. A quarter of your first gift's weight moves to them.</p>
       </div>
       <Notice title="What happens to your NEAR">

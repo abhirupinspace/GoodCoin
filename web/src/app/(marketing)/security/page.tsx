@@ -1,7 +1,7 @@
+import { Hero } from "@/components/brand";
 import type { Metadata } from "next";
-import { Button, Notice, Stamp } from "@/components/ui";
-import { LockArt } from "@/components/public/art";
-import { Callout, Chapter, Code, EndBand, PageHero } from "@/components/public/Page";
+import { Button, Notice } from "@/components/ui";
+import { Callout, Chapter, Code, EndBand } from "@/components/public/Page";
 import { AccessKeys, InvariantsLive } from "@/components/public/ref-SecurityLive";
 import { REPO } from "@/lib/config";
 
@@ -43,14 +43,14 @@ const LIMITS = [
 export default function SecurityPage() {
   return (
     <>
-      <PageHero
-        kicker="Technical archive · security"
-        title={<>No keys. <span className="text-red">No exceptions.</span></>}
-        intro={<p>The rules were fixed at deploy. Nobody can change them, including us. The chain checks the money after every step. Here is the live evidence, and the limits we can&apos;t engineer away.</p>}
-        art={<LockArt className="w-full max-w-xs" />}
-      >
-        <div className="flex flex-wrap gap-3"><Stamp tone="red">Not audited</Stamp><Stamp tone="ink">Testnet</Stamp></div>
-      </PageHero>
+      <Hero
+        variant="minimal"
+        marker={<>Technical archive <span className="text-red">/</span> Security</>}
+        lines={["Trust the mechanism.", <span key="b" className="text-red">Verify the rules.</span>]}
+        h1Class="display text-[clamp(3.4rem,8vw,8rem)]"
+        lede="Rules fixed at deploy. No keys. The chain checks the money after every step."
+        meta={[["Admin methods", "None"], ["Owner", "None"], ["Audit", "Not audited"], ["Network", "Testnet"]]}
+      />
 
       <div className="mx-auto max-w-7xl px-4 pt-10 sm:px-6">
         <Notice title="Not audited · testnet only">GOODCOIN runs on NEAR testnet. The contract has not been audited. Testnet NEAR has no value; do not treat anything here as safe for real funds.</Notice>
@@ -60,7 +60,7 @@ export default function SecurityPage() {
         <p>After the contract was initialised, every access key on its account was deleted. With zero keys, no one can deploy new code, call a privileged method or move the Hearth.</p>
         <ul className="grid gap-3 pt-2 font-sans sm:grid-cols-2">
           {NO_ADMIN.map(([t, b]) => (
-            <li key={t} className="border-2 border-ink p-4"><p className="display text-2xl">{t}</p><p className="mt-1 text-sm text-ink/75">{b}</p></li>
+            <li key={t} className="border-2 border-line p-4"><p className="display text-2xl">{t}</p><p className="mt-1 text-sm text-ink/75">{b}</p></li>
           ))}
         </ul>
       </Chapter>
@@ -96,13 +96,13 @@ export default function SecurityPage() {
         <p>A selection from the full threat model. Every design from the third version on went through independent adversarial review.</p>
         <div className="overflow-x-auto pt-2">
           <table className="w-full min-w-[640px] border-collapse text-left font-sans text-sm">
-            <thead><tr className="border-b-2 border-paper/40">{["Attack", "Defence", "What remains"].map((h) => <th key={h} scope="col" className="eyebrow px-3 py-3 text-mustard">{h}</th>)}</tr></thead>
+            <thead><tr className="border-b-2 border-line">{["Attack", "Defence", "What remains"].map((h) => <th key={h} scope="col" className="eyebrow px-3 py-3 text-mustard">{h}</th>)}</tr></thead>
             <tbody>
               {ATTACKS.map(([a, d, r]) => (
-                <tr key={a} className="border-b border-paper/15 align-top">
-                  <th scope="row" className="px-3 py-3 font-semibold text-paper">{a}</th>
-                  <td className="px-3 py-3 text-paper/80">{d}</td>
-                  <td className={`px-3 py-3 ${r === "None" ? "text-paper/60" : "text-ember"}`}>{r}</td>
+                <tr key={a} className="border-b border-line align-top">
+                  <th scope="row" className="px-3 py-3 font-semibold text-ink">{a}</th>
+                  <td className="px-3 py-3 text-ink/80">{d}</td>
+                  <td className={`px-3 py-3 ${r === "None" ? "text-ink/60" : "text-ember"}`}>{r}</td>
                 </tr>
               ))}
             </tbody>
@@ -113,7 +113,7 @@ export default function SecurityPage() {
       <Chapter id="limits" no="05" kicker="Honest limits" title="What we can't promise.">
         <ol className="space-y-4 pt-2">
           {LIMITS.map(([t, b], i) => (
-            <li key={t} className="grid grid-cols-[auto_1fr] gap-4 border-b border-ink/20 pb-4">
+            <li key={t} className="grid grid-cols-[auto_1fr] gap-4 border-b border-line pb-4">
               <span className="display text-4xl text-ember">{String(i + 1).padStart(2, "0")}</span>
               <div><p className="font-sans font-bold">{t}</p><p className="mt-1">{b}</p></div>
             </li>

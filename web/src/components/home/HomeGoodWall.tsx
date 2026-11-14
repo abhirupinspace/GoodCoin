@@ -11,5 +11,5 @@ export function HomeGoodWall() {
   if (!data) return <div className="grid gap-6 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-56 w-full" />)}</div>;
   const recent = data.filter((f) => f.outcome !== "Open" && f.givers > 0).reverse().slice(0, 6);
   if (!recent.length) return <Notice tone="empty" title="No fires on the record yet">The first fire is still burning.</Notice>;
-  return <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{recent.map((f) => <FireCard key={f.week} fire={f} feeBps={config.data?.fee_bps} />)}</div>;
+  return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{recent.map((f) => <FireCard key={f.week} fire={f} feeBps={config.data?.fee_bps} />)}</div>;
 }

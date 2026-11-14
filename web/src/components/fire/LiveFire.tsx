@@ -13,7 +13,7 @@ export function LiveFire({ light = false, compact = false }: { light?: boolean; 
   const causes = useCauses();
   const quote = useKindleQuote(fire.data?.week);
   const left = useCountdown(fire.data?.end_ns);
-  const muted = light ? "text-paper/70" : "text-ink/60";
+  const muted = light ? "text-ink/70" : "text-ink/60";
 
   if (fire.error) return <Notice tone="error" title="The fire can't be read right now">{String(fire.error)}</Notice>;
   if (!fire.data) {
@@ -27,7 +27,7 @@ export function LiveFire({ light = false, compact = false }: { light?: boolean; 
   const cause = causes.data?.[f.cause];
   const short = Math.max(0, f.goal - f.givers);
   return (
-    <div className={light ? "text-paper" : "text-ink"}>
+    <div className={light ? "text-ink" : "text-ink"}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className={`eyebrow ${light ? "text-mustard" : "text-burnt"}`}>Fire №{f.week} · {stats.data?.label === "demo" ? "demo fires last 6 minutes" : "one week"}</p>

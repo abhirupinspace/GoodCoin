@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Terms", description: "Draft terms of
 export default function TermsPage() {
   return (
     <LegalDoc
-      kicker="Legal · terms of use"
+      kicker="Terms of use"
       title="Terms, plainly."
       intro={<p>This website is a window onto a smart contract on NEAR testnet. These draft terms say what that means, in plain words.</p>}
       sections={[

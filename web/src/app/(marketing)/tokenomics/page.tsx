@@ -1,10 +1,10 @@
+import { Hero } from "@/components/brand";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HearthArt, KindleArt, Seal } from "@/components/art";
 import { HearthNumbers } from "@/components/hearth/HearthNumbers";
 import { KindleReach } from "@/components/public/LiveFacts";
-import { Callout, Chapter, Curious, EndBand, Ledger, PageHero } from "@/components/public/Page";
-import { LedgerArt } from "@/components/public/art";
+import { Callout, Chapter, Curious, EndBand, Ledger } from "@/components/public/Page";
 import { FireCharts, KindleTable, ProtocolStats, SupplyNumbers, SupplyReductions, TokenFacts } from "@/components/public/tok-Live";
 import { Button, Stamp } from "@/components/ui";
 import { units } from "@/lib/format";
@@ -44,15 +44,17 @@ export default function Tokenomics() {
   const ex = demoExample();
   return (
     <>
-      <PageHero
-        kicker="Chapter three · The technical manual"
-        title={<>GOOD, by the <span className="text-red">numbers.</span></>}
-        intro={<p>A plain account of how GOOD is made, what backs it and what can never happen to it. Every live figure on this page is read from the contract; every derived figure says what it was derived from.</p>}
-        art={<LedgerArt className="w-72 rotate-2 drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] md:w-96" />}
+      <Hero
+        variant="editorial"
+        shot="fire"
+        marker={<>Chapter 03 <span className="text-red">/</span> The Hearth</>}
+        lines={["Built to", <span key="b" className="text-red">back itself.</span>]}
+        lede="How GOOD is made, what backs it, and what can never happen to it. Live figures come from the contract."
+        meta={[["To the cause", "90%"], ["To the Hearth", "10%"], ["New GOOD costs", "≥ 1.25× floor"], ["Premine", "0"]]}
       />
 
       {/* LIVE PANEL */}
-      <section className="paper-dark relative overflow-hidden border-b-[3px] border-ink" aria-labelledby="stats-title">
+      <section className="paper-dark relative overflow-hidden border-b border-line" aria-labelledby="stats-title">
         <div className="halftone-ember absolute inset-y-0 right-0 w-1/4 opacity-15" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -77,7 +79,7 @@ export default function Tokenomics() {
         <p>GOOD started with a maximum supply of <b>1,000,000,000</b>. That number can never increase. It decreases when:</p>
         <ul className="list-none space-y-3 font-sans text-base">
           <li className="border-l-4 border-red pl-4"><b>A fire is smothered.</b> That week&apos;s allowance is destroyed: GOOD that was never minted, and now never can be.</li>
-          <li className="border-l-4 border-ink pl-4"><b>A week is closed.</b> 52 weeks after a catch, any GOOD its givers never claimed is cancelled, and the cap falls by the same amount.</li>
+          <li className="border-l-4 border-line pl-4"><b>A week is closed.</b> 52 weeks after a catch, any GOOD its givers never claimed is cancelled, and the cap falls by the same amount.</li>
         </ul>
         <p>Burning GOOD (by kindling or redeeming) reduces the GOOD in existence, but it never frees room under the cap.</p>
       </Chapter>
@@ -90,7 +92,7 @@ export default function Tokenomics() {
       </Chapter>
 
       <Chapter id="minting" no="04" kicker="Where every GOOD comes from" title="How GOOD is minted" tone="dark"
-        aside={<div className="frame-ember border-paper bg-charcoal p-6 font-sans text-paper sm:p-8">
+        aside={<div className="frame-ember border-line bg-charcoal p-6 font-sans text-ink sm:p-8">
           <p className="eyebrow text-mustard">The minting rule</p>
           <p className="display mt-3 text-4xl leading-tight">Each new GOOD is paid for with at least 1.25× the floor. Nothing else creates GOOD.</p>
         </div>}>
@@ -119,7 +121,7 @@ export default function Tokenomics() {
         aside={<div className="frame bg-paper p-6 font-sans">
           <table className="w-full border-collapse text-sm">
             <caption className="eyebrow mb-2 text-left text-burnt">Next week&apos;s goal</caption>
-            <tbody className="divide-y divide-ink/20">
+            <tbody className="divide-y divide-line">
               <tr><th scope="row" className="py-2.5 text-left font-normal">Caught on its own</th><td className="py-2.5 text-right font-bold text-forest">≈ +10%</td></tr>
               <tr><th scope="row" className="py-2.5 text-left font-normal">Caught with a kindle</th><td className="py-2.5 text-right font-bold">Unchanged</td></tr>
               <tr><th scope="row" className="py-2.5 text-left font-normal">Smothered</th><td className="py-2.5 text-right font-bold text-red">≈ −10%</td></tr>

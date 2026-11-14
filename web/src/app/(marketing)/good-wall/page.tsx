@@ -1,6 +1,6 @@
+import { Hero } from "@/components/brand";
 import type { Metadata } from "next";
-import { ArchiveArt } from "@/components/public/art";
-import { EndBand, PageHero } from "@/components/public/Page";
+import { EndBand } from "@/components/public/Page";
 import { WallArchive } from "@/components/public/wall-Archive";
 import { Button } from "@/components/ui";
 
@@ -12,11 +12,12 @@ export const metadata: Metadata = {
 export default function GoodWallPage() {
   return (
     <>
-      <PageHero
-        kicker="The archive · read live from the contract"
-        title={<>The Good <span className="text-red">Wall.</span></>}
-        intro={<p>Every fire stays on the record, the ones we kept alive and the ones that went out. Each card is a public campaign: who it burned for, how many showed up, and where the NEAR went.</p>}
-        art={<ArchiveArt className="w-full max-w-sm" />}
+      <Hero
+        variant="red"
+        shot="faces"
+        marker={<>The archive <span className="text-ink/60">/</span> Read live from the contract</>}
+        lines={["Every fire", "leaves a mark."]}
+        lede="Caught or smothered, every fire stays on the record."
       />
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 md:py-20">
         <WallArchive />

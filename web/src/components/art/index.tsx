@@ -5,13 +5,13 @@
  */
 import type { SVGProps } from "react";
 
-const INK = "#24221e";
-const PAPER = "#e8d9b9";
-const RED = "#a93428";
-const EMBER = "#d66a32";
-const BURNT = "#a84b27";
-const MUSTARD = "#c29a48";
-const FOREST = "#46543d";
+const INK = "#f2efe9";
+const PAPER = "#090909";
+const RED = "#d62929";
+const EMBER = "#e45a24";
+const BURNT = "#b94a25";
+const MUSTARD = "#f2efe9";
+const FOREST = "#292929";
 
 type ArtProps = SVGProps<SVGSVGElement> & { title?: never };
 

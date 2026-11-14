@@ -27,44 +27,44 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: stats } = useStats();
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="paper-dark sticky top-0 hidden h-screen flex-col gap-8 p-6 lg:flex">
+      <aside className="sticky top-0 hidden h-screen flex-col gap-10 border-r border-line bg-paper p-6 lg:flex">
         <Logo light />
         <nav className="flex flex-col gap-1" aria-label="Application">
           {APP_NAV.map((n) => (
-            <Link key={n.href} href={n.href} className={`display flex items-center gap-3 px-2 py-1.5 text-2xl ${active(path, n.href) ? "bg-ember text-charcoal" : "text-paper hover:text-ember"}`}>
-              {active(path, n.href) && <FlameMark width={12} height={15} color="#24221e" inner="#e8d9b9" />}{n.label}
+            <Link key={n.href} href={n.href} aria-current={active(path, n.href) ? "page" : undefined} className={`meta flex items-center gap-3 border-l-2 py-2.5 pl-3 transition-colors ${active(path, n.href) ? "border-red text-ink" : "border-transparent text-mute hover:text-ink"}`}>
+              {n.label}{active(path, n.href) && <FlameMark width={9} height={12} className="ml-auto" />}
             </Link>
           ))}
         </nav>
         <div className="mt-auto">
-          <p className="eyebrow text-mustard">Public</p>
-          <nav className="mt-3 flex flex-col gap-2 text-sm text-paper/75">
+          <p className="meta text-mute">Public</p>
+          <nav className="mt-4 flex flex-col gap-2.5 text-sm text-ink/75">
             {PUBLIC.map((n) => <Link key={n.href} href={n.href} className="hover:text-ember">{n.label}</Link>)}
           </nav>
           {stats && (
-            <p className="mt-6 border-t border-paper/15 pt-4 text-xs text-paper/60">
+            <p className="mt-6 border-t border-line pt-4 text-xs text-ink/60">
               Network: testnet · {stats.label} parameters
             </p>
           )}
         </div>
       </aside>
       <div className="flex min-w-0 flex-col pb-24 lg:pb-0">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b-2 border-ink bg-paper/95 px-4 backdrop-blur sm:px-8">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-paper/80 px-4 backdrop-blur-md sm:px-8">
           <div className="lg:hidden"><Logo /></div>
-          <p className="eyebrow hidden text-ink/60 lg:block">The operational centre of the movement</p>
+          <p className="meta hidden text-mute lg:block">The operational centre of the movement</p>
           <ConnectButton />
         </header>
-        <main className="flex-1 px-4 py-8 sm:px-8">{children}</main>
+        <main className="flex-1 px-4 py-10 sm:px-10">{children}</main>
       </div>
-      <nav className="paper-dark fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t-2 border-ember lg:hidden" aria-label="Application (mobile)">
+      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t border-line bg-paper/95 backdrop-blur-md lg:hidden" aria-label="Application (mobile)">
         {APP_NAV.filter((n) => n.mobile).map((n) => (
-          <Link key={n.href} href={n.href} className={`display py-3 text-center text-lg ${active(path, n.href) ? "text-ember" : "text-paper"}`}>{n.label.replace("My ", "").replace("The ", "")}</Link>
+          <Link key={n.href} href={n.href} className={`meta border-t-2 py-4 text-center ${active(path, n.href) ? "border-red text-ink" : "border-transparent text-mute"}`}>{n.label.replace("My ", "").replace("The ", "")}</Link>
         ))}
-        <button onClick={() => setMore((m) => !m)} aria-expanded={more} className="display py-3 text-lg text-paper">More</button>
+        <button onClick={() => setMore((m) => !m)} aria-expanded={more} className="meta border-t-2 border-transparent py-4 text-mute">More</button>
         {more && (
-          <div className="absolute bottom-full right-0 w-56 border-2 border-ember bg-charcoal p-2">
+          <div className="absolute bottom-full right-0 w-60 border border-line bg-raised p-2">
             {[...APP_NAV.filter((n) => !n.mobile), ...PUBLIC].map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setMore(false)} className="display block px-3 py-2 text-xl text-paper hover:text-ember">{n.label}</Link>
+              <Link key={n.href} href={n.href} onClick={() => setMore(false)} className="meta block px-3 py-3 text-ink/85 hover:text-ink">{n.label}</Link>
             ))}
           </div>
         )}

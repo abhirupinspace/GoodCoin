@@ -24,9 +24,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     schedule(id, t.kind);
   }, [schedule]);
   const tone: Record<Kind, string> = {
-    pending: "bg-charcoal text-paper",
-    success: "bg-forest text-paper",
-    error: "bg-red text-paper",
+    pending: "bg-charcoal text-ink",
+    success: "bg-forest text-ink",
+    error: "bg-red text-ink",
     info: "bg-paper text-ink",
   };
   return (

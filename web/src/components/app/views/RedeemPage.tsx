@@ -59,13 +59,13 @@ function Redeemer({ accountId }: { accountId: string }) {
                 id="redeem-amount" inputMode="decimal" autoComplete="off" placeholder="0.00" value={input}
                 onChange={(e) => { setInput(e.target.value.replace(",", ".")); setDone(null); }} onBlur={() => setTouched(true)}
                 aria-invalid={!!error} aria-describedby="redeem-help"
-                className="display num h-14 w-full min-w-0 border-2 border-ink bg-paper px-4 text-3xl outline-none focus:border-ember"
+                className="display num h-14 w-full min-w-0 border-2 border-line bg-paper px-4 text-3xl outline-none focus:border-ember"
               />
-              <button type="button" className="eyebrow border-2 border-ink px-3 hover:bg-parchment" onClick={() => { setInput(toDecimal(bal)); setTouched(true); }}>Max</button>
+              <button type="button" className="eyebrow border-2 border-line px-3 hover:bg-parchment" onClick={() => { setInput(toDecimal(bal)); setTouched(true); }}>Max</button>
             </div>
             {error && <p className="mt-2 text-sm font-semibold text-red" role="alert">{error}</p>}
           </div>
-          <div id="redeem-help" className="border-2 border-ink bg-parchment/50 p-4">
+          <div id="redeem-help" className="border-2 border-line bg-parchment/50 p-4">
             <p className="eyebrow text-ink/60">You receive (estimate at today&apos;s floor)</p>
             <p className="display num mt-1 text-5xl">{nearFmt(out, 6)}</p>
             <p className="mt-1 text-xs text-ink/60">⌊amount × H ÷ B⌋ with H = {nearFmt(H, 4)} and B = {goodFmt(B, 0)}. If another redemption or a catch lands first, the contract uses the floor at that moment.</p>

@@ -27,7 +27,7 @@ function summary(t: TxRow): string {
 function Row({ t }: { t: TxRow }) {
   const dep = indexedYocto(t.deposit);
   return (
-    <tr className="border-b border-ink/15 align-top">
+    <tr className="border-b border-line align-top">
       <td className="py-2.5 pr-3 text-xs text-ink/70 whitespace-nowrap">{dateFromNs(t.timestamp_ns)}</td>
       <td className="py-2.5 pr-3"><span className="display text-xl">{t.method ?? "unknown"}</span></td>
       <td className="py-2.5 pr-3 text-sm">{summary(t)}{t.signer !== t.receiver && <span className="block text-xs text-ink/50">signer {shortAccount(t.signer, 24)}</span>}</td>
@@ -58,7 +58,7 @@ function List({ accountId }: { accountId: string }) {
       ) : (
         <div className="frame overflow-x-auto bg-paper p-3 sm:p-4">
           <table className="w-full min-w-[720px] text-left">
-            <thead className="eyebrow border-b-2 border-ink text-ink/60">
+            <thead className="eyebrow border-b-2 border-line text-ink/60">
               <tr><th className="py-2 pr-3">Time</th><th className="py-2 pr-3">Method</th><th className="py-2 pr-3">Details</th><th className="py-2 pr-3 text-right">Deposit</th><th className="py-2 pr-3">Status</th><th className="py-2 text-right">Tx</th></tr>
             </thead>
             <tbody>{txns.map((t) => <Row key={t.hash} t={t} />)}</tbody>

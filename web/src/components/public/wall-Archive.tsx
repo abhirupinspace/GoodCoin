@@ -55,12 +55,12 @@ export function WallArchive() {
   }, [data, config.data]);
 
   const reset = () => { setQ(""); setOutcome("All"); setCause("all"); setFrom(""); setTo(""); setShowEmpty(false); setLimit(PAGE); };
-  const field = "h-11 w-full border-2 border-ink bg-paper px-3 font-sans text-base focus:outline-none focus-visible:outline-3 focus-visible:outline-ember";
+  const field = "h-11 w-full border-2 border-line bg-paper px-3 font-sans text-base focus:outline-none focus-visible:outline-3 focus-visible:outline-ember";
 
   return (
     <div>
       {/* summary strip */}
-      <div className="grid grid-cols-2 gap-6 border-y-[3px] border-double border-ink py-6 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-6 border-y border-line py-6 sm:grid-cols-4">
         <Summary label="Fires on the record" value={current === undefined ? null : String(current + 1n)} />
         <Summary label="Caught" value={totals ? String(totals.caught) : null} />
         <Summary label="Smothered (with givers)" value={totals ? String(totals.smothered) : null} />
@@ -92,12 +92,12 @@ export function WallArchive() {
           <span className="eyebrow mr-2 text-ink/70">Outcome</span>
           {OUTCOMES.map(([v, label]) => (
             <button key={v} type="button" aria-pressed={outcome === v} onClick={() => { setOutcome(v); setLimit(PAGE); }}
-              className={`eyebrow h-10 border-2 border-ink px-4 transition-colors ${outcome === v ? "bg-charcoal text-paper" : "hover:bg-parchment"}`}>
+              className={`eyebrow h-10 border-2 border-line px-4 transition-colors ${outcome === v ? "bg-charcoal text-ink" : "hover:bg-parchment"}`}>
               {label}
             </button>
           ))}
           <label htmlFor={ids.empty} className="ml-auto flex cursor-pointer items-center gap-2 text-sm">
-            <input id={ids.empty} type="checkbox" checked={showEmpty} onChange={(e) => setShowEmpty(e.target.checked)} className="size-5 accent-[#a84b27]" />
+            <input id={ids.empty} type="checkbox" checked={showEmpty} onChange={(e) => setShowEmpty(e.target.checked)} className="size-5 accent-[#b94a25]" />
             Show weeks nobody gave in
           </label>
           <button type="button" onClick={reset} className="eyebrow h-10 px-3 underline underline-offset-4 hover:text-burnt">Reset</button>

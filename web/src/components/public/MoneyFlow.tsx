@@ -82,12 +82,12 @@ export function MoneyFlow() {
         <label htmlFor={gid} className="block">
           <span className="eyebrow text-ink/70">Number of givers</span>
           <input id={gid} inputMode="numeric" value={giversStr} onChange={(e) => setGiversIn(e.target.value)}
-            className="num mt-1 h-12 w-full border-2 border-ink bg-paper px-3 text-xl focus:bg-white/40" />
+            className="num mt-1 h-12 w-full border-2 border-line bg-paper px-3 text-xl focus:bg-white/40" />
         </label>
         <label htmlFor={fid} className="block">
           <span className="eyebrow text-ink/70">Gift per giver (NEAR)</span>
           <input id={fid} inputMode="decimal" value={giftStr} onChange={(e) => setGiftIn(e.target.value)}
-            className="num mt-1 h-12 w-full border-2 border-ink bg-paper px-3 text-xl focus:bg-white/40" />
+            className="num mt-1 h-12 w-full border-2 border-line bg-paper px-3 text-xl focus:bg-white/40" />
         </label>
       </form>
       {edited && (
@@ -108,8 +108,8 @@ export function MoneyFlow() {
 
           {/* the split, drawn as a print bar */}
           <div className="mt-4" role="img" aria-label={`${result.feePct}% to the Hearth, ${100 - result.feePct}% to the cause`}>
-            <div className="flex h-10 border-2 border-ink">
-              <div className="flex items-center bg-forest px-3 text-paper" style={{ width: `${100 - result.feePct}%` }}><span className="eyebrow">{100 - result.feePct}% to the cause</span></div>
+            <div className="flex h-10 border-2 border-line">
+              <div className="flex items-center bg-forest px-3 text-ink" style={{ width: `${100 - result.feePct}%` }}><span className="eyebrow">{100 - result.feePct}% to the cause</span></div>
               <div className="halftone-ember flex items-center justify-center bg-ember text-charcoal" style={{ width: `${result.feePct}%` }}><span className="eyebrow">{result.feePct}%</span></div>
             </div>
           </div>
@@ -130,7 +130,7 @@ export function MoneyFlow() {
             </div>
           </dl>
 
-          <div className="mt-6 border-t-2 border-dashed border-ink/40 pt-4 text-sm text-ink/75">
+          <div className="mt-6 border-t-2 border-dashed border-line pt-4 text-sm text-ink/75">
             <p><b>If it is smothered instead:</b> every giver can claim back {trimUnits(result.gift, 4)} NEAR (the {trimUnits(result.record, 4)} NEAR record fee is kept), and this week&apos;s allowance of {units(result.A, 0)} GOOD is destroyed: the maximum supply shrinks by that much, forever.</p>
             <p className="mt-2 text-xs text-ink/60">Assumes equal gifts, no spark bounties and no other gifts in the fire. A bounty only moves GOOD between two givers; the totals above don&apos;t change. Later fires and redemptions change the live Hearth, so a real fire settles against the Hearth at the moment it ends.</p>
           </div>

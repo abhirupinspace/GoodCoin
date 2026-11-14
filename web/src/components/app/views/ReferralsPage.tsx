@@ -19,13 +19,13 @@ function LinkBox({ accountId }: { accountId: string }) {
     <div>
       <label htmlFor="ref-link" className="eyebrow">Your link</label>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-        <input id="ref-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="num h-10 min-w-0 flex-1 border-2 border-ink bg-paper px-3 text-sm outline-none focus:border-ember" />
+        <input id="ref-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="num h-10 min-w-0 flex-1 border-2 border-line bg-paper px-3 text-sm outline-none focus:border-ember" />
         <div className="flex gap-2">
           <CopyButton text={link} label="Copy link" />
           {canShare && (
             <button
               type="button"
-              className="eyebrow h-10 border-2 border-ink bg-charcoal px-4 text-paper hover:bg-burnt"
+              className="eyebrow h-10 border-2 border-line bg-charcoal px-4 text-ink hover:bg-burnt"
               onClick={() => navigator.share({ title: "Join this week's GOODCOIN fire", text: "One cause, one fire this week. Throw in NEAR with me.", url: link }).catch(() => {})}
             >
               Share
@@ -83,7 +83,7 @@ function Named({ accountId }: { accountId: string }) {
       ) : rows.length === 0 ? (
         <p className="text-sm text-ink/70">None of your indexed gifts named a spark.</p>
       ) : (
-        <ul className="divide-y divide-ink/15 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {rows.map((t) => (
             <li key={t.hash} className="flex flex-wrap items-center justify-between gap-2 py-2">
               <span>Named <strong>{shortAccount(String(t.args!.sparked_by), 30)}</strong> in fire №{String(t.args?.week ?? "?")} <span className="text-ink/60">· {dateFromNs(t.timestamp_ns)}</span></span>

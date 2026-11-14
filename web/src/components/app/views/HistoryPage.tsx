@@ -58,7 +58,7 @@ function Entries({ accountId }: { accountId: string }) {
         {hist.data.entries.map((e) => {
           const hashes = gives.filter((t) => String(t.args?.week ?? "") === e.week).map((t) => t.hash);
           return (
-            <li key={e.week} className="border-2 border-ink bg-paper p-4">
+            <li key={e.week} className="border-2 border-line bg-paper p-4">
               <div className="grid gap-4 md:grid-cols-[7rem_1fr_auto] md:items-center">
                 <div>
                   <p className="display text-5xl leading-none text-burnt">№{e.week}</p>
