@@ -10,7 +10,7 @@ export const ASSETS = {
   /** Master artwork: a torch-bearing crowd (transparent PNG). */
   crowd: { src: "/img/crowd.png", width: 2160, height: 1215, flame: { x: 57, y: 13, rx: 17, ry: 17 } },
   /** The gathering: a crowd around the communal fire under flame banners (opaque, already red). */
-  hearth: { src: "/img/hero1.png", width: 1920, height: 1080, flame: { x: 60, y: 74, rx: 14, ry: 12 } },
+  hearth: { src: "/img/herolanding.png", width: 1920, height: 1080, flame: { x: 60, y: 74, rx: 14, ry: 12 } },
 } satisfies Record<string, Asset>;
 
 export type AssetName = keyof typeof ASSETS;
