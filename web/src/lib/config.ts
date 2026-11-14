@@ -12,3 +12,11 @@ export const accountUrl = (account: string) => `${EXPLORER}/address/${account}`;
 /** Gas for every change call (80 TGas). */
 export const GAS = "80000000000000";
 export const ONE_YOCTO = "1";
+
+export const isValidFireId = (id: string) => /^[a-z0-9._-]{2,64}$/.test(id);
+
+/** Fire (contract) from a request's ?fire= param, or the default demo contract. */
+export function fireFromRequest(req: Request): string {
+  const f = new URL(req.url).searchParams.get("fire");
+  return f && isValidFireId(f) ? f : CONTRACT;
+}

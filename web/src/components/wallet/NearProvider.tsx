@@ -6,7 +6,8 @@
 import type { NearConnector, NearWalletBase } from "@hot-labs/near-connect";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { CONTRACT, GAS, NETWORK, RPC_URLS } from "@/lib/config";
+import { GAS, NETWORK, RPC_URLS } from "@/lib/config";
+import { useFireId } from "@/lib/fire-context";
 import { txFailure, waitForFinalTx } from "@/lib/rpc";
 
 export class TxError extends Error {
@@ -23,14 +24,27 @@ interface NearContextValue {
   ready: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
-  /** Sign, send, wait for finality. Resolves with the tx hash; rejects with TxError. */
+  /** Sign, send to the selected fire, wait for finality. Resolves with the tx hash; rejects with TxError. */
   call: (method: ChangeMethod, args: Record<string, unknown>, depositYocto?: string) => Promise<string>;
+  /** Same, to any contract (e.g. the fire factory), with an explicit gas limit. */
+  callContract: (receiverId: string, method: string, args: Record<string, unknown>, depositYocto?: string, gas?: string) => Promise<string>;
+}
+
+/** Hand a confirmed transaction to the indexer so every viewer sees it live. Best effort. */
+function ingest(txHash: string, signer: string) {
+  void fetch("/api/ingest", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ txHash, signer }),
+    keepalive: true,
+  }).catch(() => {});
 }
 
 const NearContext = createContext<NearContextValue | null>(null);
 
 export function NearProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const fire = useFireId();
   const connectorRef = useRef<NearConnector | null>(null);
   const [wallet, setWallet] = useState<NearWalletBase | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
@@ -90,14 +104,14 @@ export function NearProvider({ children }: { children: ReactNode }) {
     setAccountId(null);
   }, [wallet]);
 
-  const call = useCallback(
-    async (method: ChangeMethod, args: Record<string, unknown>, depositYocto = "0") => {
+  const callContract = useCallback(
+    async (receiverId: string, method: string, args: Record<string, unknown>, depositYocto = "0", gas = GAS) => {
       if (!wallet || !accountId) throw new TxError("Connect a wallet first.", null);
       let hash: string | null = null;
       try {
         const outcome = await wallet.signAndSendTransaction({
-          receiverId: CONTRACT,
-          actions: [{ type: "FunctionCall", params: { methodName: method, args, gas: GAS, deposit: depositYocto } }],
+          receiverId,
+          actions: [{ type: "FunctionCall", params: { methodName: method, args, gas, deposit: depositYocto } }],
         });
         hash = (outcome as { transaction?: { hash?: string } } | undefined)?.transaction?.hash ?? null;
       } catch (e) {
@@ -113,13 +127,19 @@ export function NearProvider({ children }: { children: ReactNode }) {
         if (e instanceof TxError) throw e;
         throw new TxError(`Sent, but finality could not be confirmed (${e instanceof Error ? e.message : "unknown"}). Check the explorer.`, hash);
       } finally {
+        ingest(hash, accountId);
         await queryClient.invalidateQueries();
       }
     },
     [wallet, accountId, queryClient],
   );
 
-  const value = useMemo(() => ({ accountId, ready, connect, disconnect, call }), [accountId, ready, connect, disconnect, call]);
+  const call = useCallback(
+    (method: ChangeMethod, args: Record<string, unknown>, depositYocto = "0") => callContract(fire, method, args, depositYocto),
+    [callContract, fire],
+  );
+
+  const value = useMemo(() => ({ accountId, ready, connect, disconnect, call, callContract }), [accountId, ready, connect, disconnect, call, callContract]);
   return <NearContext.Provider value={value}>{children}</NearContext.Provider>;
 }
 

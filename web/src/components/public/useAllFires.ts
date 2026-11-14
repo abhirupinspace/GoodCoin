@@ -1,13 +1,15 @@
 "use client";
 // Every fire 0..current_week, fetched in pages of 100 (list_fires caps a page at 100).
-// Shares the ["fires", from] cache with useFires(). Only the newest page polls; older pages are settled history.
+// Shares the [fire, "fires", from] cache with useFires(). Only the newest page polls; older pages are settled history.
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { listFires } from "@/services/contract";
 import { useStats } from "@/lib/useQueries";
+import { useFireId } from "@/lib/fire-context";
 import type { FireView } from "@/types/contract";
 
 export function useAllFires(): { data: FireView[] | undefined; error: unknown; current: bigint | undefined } {
+  const f = useFireId();
   const stats = useStats();
   const current = stats.data ? BigInt(stats.data.current_week) : undefined;
   const pages = current === undefined ? 0 : Number(current / 100n) + 1;
@@ -16,9 +18,9 @@ export function useAllFires(): { data: FireView[] | undefined; error: unknown; c
       const from = String(i * 100);
       const last = i === pages - 1;
       return {
-        queryKey: ["fires", from],
-        queryFn: () => listFires(from, 100),
-        refetchInterval: last ? 8_000 : false,
+        queryKey: [f, "fires", from],
+        queryFn: () => listFires(from, 100, f),
+        refetchInterval: last ? 30_000 : false,
         staleTime: last ? 0 : 60_000,
       } as const;
     }),

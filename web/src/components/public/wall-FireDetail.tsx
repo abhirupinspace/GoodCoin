@@ -5,7 +5,8 @@ import { useState, type ReactNode } from "react";
 import { Plate } from "@/components/brand";
 import { shotForWeek } from "@/components/brand/assets";
 import { Button, CopyButton, Notice, OutcomeStamp, Skeleton, Stamp, Term } from "@/components/ui";
-import { CONTRACT, accountUrl } from "@/lib/config";
+import { accountUrl } from "@/lib/config";
+import { useFireId } from "@/lib/fire-context";
 import { compact, dateFromNs, goodFmt, nearFmt } from "@/lib/format";
 import { useCauses, useConfig, useFire, useReport, useStats } from "@/lib/useQueries";
 import type { FireView, PayoutStatus } from "@/types/contract";
@@ -23,6 +24,7 @@ const PAYOUT: Record<PayoutStatus, { label: string; tone: "forest" | "ember" | "
 type Phase = "future" | "burning" | "unsettled" | "settled";
 
 export function WallFireDetail({ week }: { week: string }) {
+  const CONTRACT = useFireId();
   const stats = useStats();
   const config = useConfig();
   const causes = useCauses();
@@ -188,6 +190,7 @@ export function WallFireDetail({ week }: { week: string }) {
 }
 
 function FireCardImage({ week }: { week: string }) {
+  const fire = useFireId();
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   return (
     <div className="frame relative mt-4 bg-charcoal">
@@ -196,7 +199,7 @@ function FireCardImage({ week }: { week: string }) {
         ? <div className="p-6"><Notice tone="error" title="The fire card can't be loaded">Try again shortly.</Notice></div>
         : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/fire-card/${week}`} alt={`On-chain fire card for fire №${week}, rendered by the contract`} className="block h-auto w-full"
+          <img src={`/api/fire-card/${week}?fire=${encodeURIComponent(fire)}`} alt={`On-chain fire card for fire №${week}, rendered by the contract`} className="block h-auto w-full"
             onLoad={() => setState("ok")} onError={() => setState("error")} />
         )}
     </div>

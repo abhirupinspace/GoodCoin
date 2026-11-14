@@ -5,30 +5,37 @@ import * as c from "@/services/contract";
 import type { Config, FireView, StatsView } from "@/types/contract";
 import { share } from "@/lib/protocol";
 import { useStats, type HistoryEntry } from "@/lib/useQueries";
+import { useFireId } from "@/lib/fire-context";
 
 const ONE = 10n ** 24n;
 
 /** Every fire from week 0 to the current one (list_fires pages of 100, contract state). */
 export function useAllFires() {
+  const f = useFireId();
   const stats = useStats();
   const cw = stats.data?.current_week;
   return useQuery({
-    queryKey: ["fires", "all", cw],
+    queryKey: [f, "fires", "all", cw],
     enabled: cw !== undefined,
     queryFn: async () => {
       const last = Number(cw);
       const froms = Array.from({ length: Math.floor(last / 100) + 1 }, (_, i) => String(i * 100));
       const pages: FireView[][] = [];
-      for (let i = 0; i < froms.length; i += 4) pages.push(...(await Promise.all(froms.slice(i, i + 4).map((f) => c.listFires(f, 100)))));
+      for (let i = 0; i < froms.length; i += 4) pages.push(...(await Promise.all(froms.slice(i, i + 4).map((from) => c.listFires(from, 100, f)))));
       return pages.flat();
     },
     refetchInterval: 30_000,
   });
 }
 
-export const useStorageMin = () => useQuery({ queryKey: ["storage", "min"], queryFn: c.storageMin, staleTime: Infinity });
-export const useStorageOf = (a: string | null) =>
-  useQuery({ queryKey: ["storage", "of", a], queryFn: () => c.storageOf(a!), enabled: !!a, refetchInterval: 15_000 });
+export const useStorageMin = () => {
+  const f = useFireId();
+  return useQuery({ queryKey: [f, "storage", "min"], queryFn: () => c.storageMin(f), staleTime: Infinity });
+};
+export const useStorageOf = (a: string | null) => {
+  const f = useFireId();
+  return useQuery({ queryKey: [f, "storage", "of", a], queryFn: () => c.storageOf(a!, f), enabled: !!a, refetchInterval: 30_000 });
+};
 
 /** A settled week is one the contract has already settled; later weeks have no final outcome yet. */
 export const isSettled = (week: string, stats: StatsView) => BigInt(week) < BigInt(stats.next_to_settle);

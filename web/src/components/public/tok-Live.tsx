@@ -1,4 +1,5 @@
 "use client";
+import { useFireId } from "@/lib/fire-context";
 // Live panels for /tokenomics. Every figure comes from a contract view; derived figures say what they are derived from.
 import { useQuery } from "@tanstack/react-query";
 import { Notice, Skeleton, Stamp, Stat, Term } from "@/components/ui";
@@ -15,7 +16,8 @@ export const GENESIS_MAX = 1_000_000_000n * 10n ** 24n;
 interface FtMetadata { spec: string; name: string; symbol: string; decimals: number }
 
 export function TokenFacts() {
-  const meta = useQuery({ queryKey: ["ft_metadata"], queryFn: () => view<FtMetadata>("ft_metadata"), staleTime: Infinity });
+  const fire = useFireId();
+  const meta = useQuery({ queryKey: [fire, "ft_metadata"], queryFn: () => view<FtMetadata>("ft_metadata", {}, fire), staleTime: Infinity });
   if (meta.error) return <Notice tone="error" title="Token metadata unavailable">{String(meta.error)}</Notice>;
   if (!meta.data) return <Skeleton className="h-40 w-full" />;
   const m = meta.data;

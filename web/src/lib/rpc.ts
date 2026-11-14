@@ -43,7 +43,8 @@ export async function rpc<T>(method: string, params: unknown): Promise<T> {
     preferred = idx;
     if (body.error) {
       const cause = body.error.cause?.name;
-      if (cause === "UNKNOWN_ACCOUNT" || cause === "NO_CONTRACT_CODE") throw new ContractNotDeployedError(CONTRACT);
+      if (cause === "UNKNOWN_ACCOUNT" || cause === "NO_CONTRACT_CODE")
+        throw new ContractNotDeployedError((params as { account_id?: string })?.account_id ?? CONTRACT);
       throw new RpcCallError(String(body.error.data ?? body.error.message ?? "RPC error"));
     }
     return body.result as T;

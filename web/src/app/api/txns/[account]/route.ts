@@ -1,6 +1,6 @@
 // GET /api/txns/:account — INDEXED DATA (not contract state): the account's transactions to the GOODCOIN
 // contract, from NearBlocks v3 testnet. Cached 30 s per account; optional server-only NEARBLOCKS_API_KEY.
-import { CONTRACT } from "@/lib/config";
+import { fireFromRequest } from "@/lib/config";
 
 interface NBTxn {
   transaction_hash: string;
@@ -19,10 +19,12 @@ function toYoctoString(v: number | string): string {
   return v.toLocaleString("fullwide", { useGrouping: false, maximumFractionDigits: 0 });
 }
 
-export async function GET(_req: Request, { params }: { params: Promise<{ account: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ account: string }> }) {
   const { account } = await params;
   if (!/^[a-z0-9._-]{2,64}$/.test(account)) return Response.json({ txns: [], error: "invalid account", stale: false }, { status: 400 });
-  const hit = cache.get(account);
+  const fire = fireFromRequest(req);
+  const ck = `${fire}:${account}`;
+  const hit = cache.get(ck);
   if (hit && Date.now() - hit.at < 30_000) return Response.json(hit.body);
   try {
     const key = process.env.NEARBLOCKS_API_KEY;
@@ -31,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ account
     if (!res.ok) throw new Error(res.status === 429 ? "NearBlocks rate limit. Try again shortly" : `NearBlocks ${res.status}`);
     const json = (await res.json()) as { data?: NBTxn[] };
     const txns = (json.data ?? [])
-      .filter((t) => t.receiver_account_id === CONTRACT)
+      .filter((t) => t.receiver_account_id === fire)
       .map((t) => {
         const a = t.actions?.[0];
         let args: Record<string, unknown> | null = null;
@@ -43,7 +45,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ account
         };
       });
     const body = { txns, error: null, stale: false };
-    cache.set(account, { at: Date.now(), body });
+    cache.set(ck, { at: Date.now(), body });
     return Response.json(body);
   } catch (e) {
     const error = e instanceof Error ? e.message : "indexer unavailable";

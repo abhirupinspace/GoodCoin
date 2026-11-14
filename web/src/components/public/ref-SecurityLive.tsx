@@ -2,13 +2,15 @@
 // Live security evidence: access keys on the contract account and the on-chain invariants.
 import { useQuery } from "@tanstack/react-query";
 import { Notice, Skeleton, Stamp } from "@/components/ui";
-import { CONTRACT, accountUrl } from "@/lib/config";
+import { accountUrl } from "@/lib/config";
+import { useFireId } from "@/lib/fire-context";
 import { viewAccessKeys } from "@/lib/rpc";
 import { useInvariants } from "@/lib/useQueries";
 import type { Invariants } from "@/types/contract";
 
 export function AccessKeys() {
-  const q = useQuery({ queryKey: ["access-keys", CONTRACT], queryFn: () => viewAccessKeys(CONTRACT), refetchInterval: 30_000 });
+  const CONTRACT = useFireId();
+  const q = useQuery({ queryKey: [CONTRACT, "access-keys"], queryFn: () => viewAccessKeys(CONTRACT), refetchInterval: 30_000 });
   if (q.error) return <Notice tone="error" title="Access keys can't be read right now">{String(q.error)}</Notice>;
   if (q.data === undefined) return <Skeleton className="h-40 w-full" />;
   const locked = q.data === 0;
