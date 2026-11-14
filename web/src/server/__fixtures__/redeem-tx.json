@@ -1,0 +1,78 @@
+{
+ "transaction": {
+  "hash": "7AKCgbcYgwZzxTabbUJXUDUKFMbdF21JpvNhmavHsdHJ",
+  "signer_id": "alice.gcteam-ab92.testnet",
+  "receiver_id": "goodfire-demo4-ab92.testnet"
+ },
+ "receipts": [
+  {
+   "execution_outcome": {
+    "id": "28JketowZRSrdSjpE7W3mNwsFPPeu1UCwsXux9jycCXT",
+    "block_height": 277412924,
+    "block_timestamp": 1794515631561472983,
+    "outcome": {
+     "logs": [
+      "EVENT_JSON:{\"standard\":\"nep141\",\"version\":\"1.0.0\",\"event\":\"ft_burn\",\"data\":[{\"owner_id\":\"alice.gcteam-ab92.testnet\",\"amount\":\"10000000000000000000000000000\",\"memo\":\"redeem\"}]}",
+      "EVENT_JSON:{\"standard\":\"goodcoin\",\"version\":\"1.0.0\",\"event\":\"redeemed\",\"data\":{\"account\":\"alice.gcteam-ab92.testnet\",\"good\":\"10000000000000000000000000000\",\"near\":\"10479941829919079594994\"}}"
+     ],
+     "executor_id": "goodfire-demo4-ab92.testnet"
+    }
+   }
+  },
+  {
+   "execution_outcome": {
+    "id": "BHK3DsWqBGavqFPvtpReZb181HN2EgM2hfbPZSjzY2vk",
+    "block_height": 277412925,
+    "block_timestamp": 1794515631925639297,
+    "outcome": {
+     "logs": [],
+     "executor_id": "alice.gcteam-ab92.testnet"
+    }
+   }
+  },
+  {
+   "execution_outcome": {
+    "id": "BV6CvhwvgZWuyRBCqBFVfgbGggJpZWo1wxydXwU5WTuZ",
+    "block_height": 277412925,
+    "block_timestamp": 1794515631925639297,
+    "outcome": {
+     "logs": [],
+     "executor_id": "alice.gcteam-ab92.testnet"
+    }
+   }
+  },
+  {
+   "execution_outcome": {
+    "id": "DKXuDXCuNNCi23o7PVmqdzTd2g8QtotikrJRVh5WfUbY",
+    "block_height": 277412926,
+    "block_timestamp": 1794515632456942985,
+    "outcome": {
+     "logs": [],
+     "executor_id": "alice.gcteam-ab92.testnet"
+    }
+   }
+  },
+  {
+   "execution_outcome": {
+    "id": "Dm46aoj8UHBnYHmecMo5m3zohrHAGDPifVntLei4oVHC",
+    "block_height": 277412926,
+    "block_timestamp": 1794515632456942985,
+    "outcome": {
+     "logs": [],
+     "executor_id": "goodfire-demo4-ab92.testnet"
+    }
+   }
+  },
+  {
+   "execution_outcome": {
+    "id": "6VuC4CAYQkafjVz2njZCPoLujUXcYFqXR4eEVmgashQR",
+    "block_height": 277412927,
+    "block_timestamp": 1794515633107399165,
+    "outcome": {
+     "logs": [],
+     "executor_id": "alice.gcteam-ab92.testnet"
+    }
+   }
+  }
+ ]
+}
