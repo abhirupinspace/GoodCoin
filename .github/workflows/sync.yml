@@ -1,0 +1,19 @@
+# Backup scheduler for the indexer + keeper. The primary is a Neon Function cron trigger (every minute);
+# GitHub's schedule is best-effort (every 5 minutes at most). Needs repo secrets SYNC_URL and CRON_SECRET.
+name: sync
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call /api/sync
+        env:
+          SYNC_URL: ${{ secrets.SYNC_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SYNC_URL" ]; then echo "SYNC_URL not set"; exit 0; fi
+          curl -fsS -m 120 -H "authorization: Bearer $CRON_SECRET" "$SYNC_URL" | head -c 2000
