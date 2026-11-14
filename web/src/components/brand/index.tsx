@@ -39,9 +39,9 @@ export function Plate({ shot, treatment = "fire", className = "", style, priorit
   return (
     <div className={`${pos(className)} overflow-hidden ${className}`} style={{ containerType: "size", ...style }} aria-hidden>
       <div style={plate}>
-        <Image src={a.src} alt="" fill priority={priority} sizes={sizes} style={{ filter: base }} />
+        <Image src={a.src} alt="" fill preload={priority} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} sizes={sizes} style={{ filter: base }} />
         {treatment === "fire" && f && (
-          <Image src={a.src} alt="" fill sizes={sizes} style={{
+          <Image src={a.src} alt="" fill loading={priority ? "eager" : "lazy"} sizes={sizes} style={{
             filter: "saturate(1.25) contrast(1.1)",
             maskImage: `radial-gradient(ellipse ${f.rx}% ${f.ry}% at ${f.x}% ${f.y}%, #000 45%, transparent 100%)`,
             WebkitMaskImage: `radial-gradient(ellipse ${f.rx}% ${f.ry}% at ${f.x}% ${f.y}%, #000 45%, transparent 100%)`,
@@ -55,17 +55,17 @@ export function Plate({ shot, treatment = "fire", className = "", style, priorit
 }
 
 /** A plate that reveals through a clipping mask when scrolled into view and settles from a slight zoom. */
-export function ImageReveal({ shot, treatment, className = "", delay = 0 }: { shot: ShotName; treatment?: Treatment; className?: string; delay?: number }) {
+export function ImageReveal({ shot, treatment, className = "", delay = 0, priority = false }: { shot: ShotName; treatment?: Treatment; className?: string; delay?: number; /** Above the fold: load eagerly. */ priority?: boolean }) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   // Observe the unclipped wrapper; a fully clipped element never reports an intersection.
   const seen = useInView(ref, { once: true, margin: "0px 0px -10% 0px" });
-  if (reduce) return <Plate shot={shot} treatment={treatment} className={className} />;
+  if (reduce) return <Plate shot={shot} treatment={treatment} className={className} priority={priority} />;
   return (
     <div ref={ref} className={`${pos(className)} overflow-hidden ${className}`}>
       <motion.div className="absolute inset-0" initial={{ clipPath: "inset(100% 0 0 0)" }} animate={seen ? { clipPath: "inset(0% 0 0 0)" } : undefined} transition={{ duration: 1.1, delay, ease: EASE }}>
         <motion.div className="absolute inset-0" initial={{ scale: 1.18 }} animate={seen ? { scale: 1 } : undefined} transition={{ duration: 1.6, delay, ease: EASE }}>
-          <Plate shot={shot} treatment={treatment} className="absolute inset-0" />
+          <Plate shot={shot} treatment={treatment} className="absolute inset-0" priority={priority} />
         </motion.div>
       </motion.div>
     </div>
@@ -230,7 +230,7 @@ export function Hero({ variant, marker, lines, lede, actions, shot, meta, childr
         <div className="shell flex flex-col justify-end py-16 md:py-24 md:pr-12">{Copy}</div>
         {shot && (
           <div className="relative min-h-[min(60svh,40rem)] border-t border-line md:border-l md:border-t-0">
-            <ImageReveal shot={shot} treatment="fire" className="absolute inset-0" />
+            <ImageReveal shot={shot} treatment="fire" className="absolute inset-0" priority />
             <div className="meta absolute bottom-5 left-5 z-10 text-ink/70">Fig. 01</div>
           </div>
         )}
