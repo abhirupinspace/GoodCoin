@@ -10,19 +10,20 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@hot-labs/near-connect": "0.12.0",
+    "@tanstack/react-query": "5.107.1",
+    "motion": "14.7.1",
+    "near-api-js": "7.4.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "@tanstack/react-query": "5.107.1",
-    "@hot-labs/near-connect": "0.12.0",
-    "near-api-js": "7.4.0"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "@types/react": "19.2.2",
-    "@types/node": "22.18.0",
-    "tailwindcss": "4.3.3",
     "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.18.0",
+    "@types/react": "19.2.2",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
     "vitest": "4.1.12"
   }
 }

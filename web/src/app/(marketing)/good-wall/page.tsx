@@ -13,7 +13,7 @@ export default function GoodWallPage() {
   return (
     <>
       <PageHero
-        kicker="Permanent exhibition · read live from the contract"
+        kicker="The archive · read live from the contract"
         title={<>The Good <span className="text-red">Wall.</span></>}
         intro={<p>Every fire stays on the record, the ones we kept alive and the ones that went out. Each card is a public campaign: who it burned for, how many showed up, and where the NEAR went.</p>}
         art={<ArchiveArt className="w-full max-w-sm" />}

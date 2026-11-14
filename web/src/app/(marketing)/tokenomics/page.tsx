@@ -45,7 +45,7 @@ export default function Tokenomics() {
   return (
     <>
       <PageHero
-        kicker="The GOODCOIN financial bulletin · Vol. I"
+        kicker="Chapter three · The technical manual"
         title={<>GOOD, by the <span className="text-red">numbers.</span></>}
         intro={<p>A plain account of how GOOD is made, what backs it and what can never happen to it. Every live figure on this page is read from the contract; every derived figure says what it was derived from.</p>}
         art={<LedgerArt className="w-72 rotate-2 drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] md:w-96" />}

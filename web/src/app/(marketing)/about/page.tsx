@@ -25,7 +25,7 @@ export default function About() {
         <div className="rays absolute inset-0 opacity-40" aria-hidden />
         <FieldLines className="absolute bottom-0 h-24 w-full" color="#46543d" />
         <div className="relative mx-auto max-w-6xl px-4 pb-32 pt-16 sm:px-6 md:pt-24">
-          <p className="eyebrow text-mustard">A statement of intent</p>
+          <p className="lettering text-lg text-mustard">Prologue · A statement of intent</p>
           <h1 className="display misprint-paper mt-5 text-[clamp(3.2rem,9vw,8rem)] text-paper">
             The internet has mastered attention. <span className="text-ember">We want to coordinate action.</span>
           </h1>

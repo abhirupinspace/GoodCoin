@@ -86,7 +86,7 @@ export default function Faq() {
   return (
     <>
       <PageHero
-        kicker="Questions, asked out loud"
+        kicker="Field guide"
         title={<>Frequently asked <span className="text-red">questions.</span></>}
         intro={<p>Straight answers, including the parts that aren&apos;t flattering. Live values are read from the contract.</p>}
         art={<MegaphoneArt className="w-72 md:w-96" />}

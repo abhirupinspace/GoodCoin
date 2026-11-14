@@ -44,7 +44,7 @@ export default function SecurityPage() {
   return (
     <>
       <PageHero
-        kicker="Security · threat model"
+        kicker="Technical archive · security"
         title={<>No keys. <span className="text-red">No exceptions.</span></>}
         intro={<p>The rules were fixed at deploy. Nobody can change them, including us. The chain checks the money after every step. Here is the live evidence, and the limits we can&apos;t engineer away.</p>}
         art={<LockArt className="w-full max-w-xs" />}

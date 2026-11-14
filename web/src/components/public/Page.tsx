@@ -1,6 +1,7 @@
 // Server-safe page scaffolding for the public pamphlets: hero, numbered chapters, asides and callouts.
 import type { ReactNode } from "react";
 import { Sunburst } from "@/components/art";
+import { HandDrawnDivider, Reveal } from "@/components/comic";
 
 /** Poster-style page hero. `art` sits on the right on desktop, below the text on mobile. */
 export function PageHero({ kicker, title, intro, art, children, tone = "paper" }: {
@@ -13,13 +14,14 @@ export function PageHero({ kicker, title, intro, art, children, tone = "paper" }
       <div className={`${dark ? "halftone-ember opacity-15" : "halftone opacity-30"} absolute inset-0`} aria-hidden />
       <div className={`relative mx-auto grid max-w-7xl items-end gap-10 px-4 py-14 sm:px-6 md:py-20 ${art ? "md:grid-cols-[1.35fr_0.65fr]" : ""}`}>
         <div className="relative z-10">
-          <p className={`eyebrow ${dark ? "text-mustard" : "text-burnt"}`}>{kicker}</p>
+          <p className={`lettering text-lg ${dark ? "text-mustard" : "text-burnt"}`}>{kicker}</p>
           <h1 className={`display mt-4 text-[clamp(3.4rem,10vw,8.5rem)] ${dark ? "misprint-paper text-paper" : "misprint text-ink"}`}>{title}</h1>
           {intro && <div className={`mt-6 max-w-2xl font-serif text-lg leading-relaxed sm:text-xl ${dark ? "text-paper/85" : "text-ink/80"}`}>{intro}</div>}
           {children && <div className="mt-8">{children}</div>}
         </div>
-        {art && <div className="relative flex justify-center md:justify-end">{art}</div>}
+        {art && <div className="relative flex justify-center md:justify-end"><div className={`ink-panel ink-panel-thin ${dark ? "ink-panel-paper" : ""} p-4`}>{art}</div></div>}
       </div>
+      <HandDrawnDivider className="relative -mb-2 opacity-70" color={dark ? "#d66a32" : "#24221e"} />
     </section>
   );
 }
@@ -34,11 +36,11 @@ export function Chapter({ id, no, title, kicker, children, tone = "paper", aside
     <section id={id} className={`relative scroll-mt-20 ${bg} ${className}`} aria-labelledby={id ? `${id}-title` : undefined}>
       <div className={`mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 md:py-24 ${aside ? "lg:grid-cols-[1.1fr_0.9fr]" : ""}`}>
         <div>
-          <p className={`eyebrow ${dark ? "text-mustard" : "text-burnt"}`}><span className="mr-3">{no}</span>{kicker}</p>
+          <p className={`lettering text-lg ${dark ? "text-mustard" : "text-burnt"}`}><span className="display mr-3 text-2xl">{no}</span>{kicker}</p>
           <h2 id={id ? `${id}-title` : undefined} className={`display mt-3 text-5xl sm:text-6xl md:text-7xl ${dark ? "misprint-paper" : "misprint"}`}>{title}</h2>
           <div className={`mt-6 space-y-4 font-serif text-lg leading-relaxed ${dark ? "text-paper/85" : "text-ink/85"}`}>{children}</div>
         </div>
-        {aside && <div className="min-w-0 self-start">{aside}</div>}
+        {aside && <Reveal className="min-w-0 self-start">{aside}</Reveal>}
       </div>
     </section>
   );
@@ -48,7 +50,7 @@ export function Chapter({ id, no, title, kicker, children, tone = "paper", aside
 export function Curious({ children, title = "For the curious", light = false }: { children: ReactNode; title?: string; light?: boolean }) {
   return (
     <details className={`group mt-6 border-2 border-dashed ${light ? "border-paper/40" : "border-ink/40"} p-4 font-sans text-base`}>
-      <summary className="eyebrow cursor-pointer list-none select-none">
+      <summary className="lettering cursor-pointer list-none select-none text-base">
         <span className="mr-2 inline-block transition-transform group-open:rotate-90" aria-hidden>▸</span>{title}
       </summary>
       <div className={`mt-3 space-y-2 text-sm leading-relaxed ${light ? "text-paper/80" : "text-ink/80"}`}>{children}</div>

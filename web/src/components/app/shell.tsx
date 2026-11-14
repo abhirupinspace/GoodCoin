@@ -10,8 +10,8 @@ export function PageHeader({ eyebrow, title, intro, aside }: { eyebrow: ReactNod
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-6 border-b-[3px] border-double border-ink pb-6">
       <div className="max-w-3xl">
-        <p className="eyebrow text-burnt">{eyebrow}</p>
-        <h1 className="display misprint mt-2 text-5xl sm:text-6xl">{title}</h1>
+        <p className="lettering text-lg text-burnt">{eyebrow}</p>
+        <h1 className="display misprint mt-1 text-5xl sm:text-6xl">{title}</h1>
         {intro && <div className="mt-3 font-serif text-lg leading-relaxed text-ink/80">{intro}</div>}
       </div>
       {aside}
@@ -67,7 +67,7 @@ export function QueryError({ what, error }: { what: string; error: unknown }) {
 
 export function Card({ title, eyebrow, children, className = "", id }: { title?: ReactNode; eyebrow?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section id={id} className={`frame bg-paper p-5 sm:p-6 ${className}`}>
+    <section id={id} className={`ink-panel ink-panel-thin bg-paper p-5 shadow-[5px_5px_0_var(--color-ink)] sm:p-6 ${className}`}>
       {eyebrow && <p className="eyebrow text-burnt">{eyebrow}</p>}
       {title && <h2 className="display mt-1 text-3xl sm:text-4xl">{title}</h2>}
       <div className={title || eyebrow ? "mt-4" : ""}>{children}</div>

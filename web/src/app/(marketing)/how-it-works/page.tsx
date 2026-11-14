@@ -47,7 +47,7 @@ export default function HowItWorks() {
   return (
     <>
       <PageHero
-        kicker="Public information pamphlet · No. 1"
+        kicker="Chapter two · How it works"
         title={<>How the fire <span className="text-red">works.</span></>}
         intro={<p>Everything GOODCOIN does, explained plainly and in order, with numbers read live from the contract. No formulas required, but they are here for the curious.</p>}
         art={<PamphletArt className="w-64 -rotate-3 drop-shadow-[8px_8px_0_rgba(36,34,30,0.9)] md:w-80" />}

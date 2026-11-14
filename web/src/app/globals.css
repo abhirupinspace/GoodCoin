@@ -17,6 +17,8 @@
   --font-display: var(--font-bebas), "Oswald", "Arial Narrow", sans-serif;
   --font-sans: var(--font-archivo), "IBM Plex Sans", system-ui, sans-serif;
   --font-serif: var(--font-baskerville), Georgia, serif;
+  --font-hand: var(--font-patrick), "Comic Neue", cursive;
+  --color-ink-black: #292720;
 
   --animate-flicker: flicker 3.2s ease-in-out infinite;
   --animate-rise: rise 9s linear infinite;
@@ -97,6 +99,47 @@
   .frame { border: 2px solid var(--color-ink); box-shadow: 6px 6px 0 var(--color-ink); }
   .frame-ember { border: 2px solid var(--color-ink); box-shadow: 6px 6px 0 var(--color-ember); }
   .num { font-variant-numeric: tabular-nums; }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------- comic book system
+     Ink panels use a pseudo-element border passed through an SVG roughness filter, so the
+     line wobbles like hand inking while the panel content stays perfectly crisp. */
+  .ink-panel { position: relative; isolation: isolate; }
+  .ink-panel::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    border: 3px solid var(--color-ink); filter: url(#ink-rough);
+  }
+  .ink-panel-thin::after { border-width: 2px; }
+  .ink-panel-paper::after { border-color: var(--color-paper); }
+  .ink-shadow { box-shadow: 7px 7px 0 var(--color-ink); }
+  .ink-shadow-ember { box-shadow: 7px 7px 0 var(--color-ember); }
+  /* Hand-lettered comic caption (narration box). */
+  .lettering { font-family: var(--font-hand); letter-spacing: 0.02em; text-transform: uppercase; }
+  .narration {
+    position: relative; display: inline-block; background: var(--color-mustard); color: var(--color-ink);
+    font-family: var(--font-hand); text-transform: uppercase; letter-spacing: 0.03em; line-height: 1.15;
+    padding: 0.55rem 0.85rem; box-shadow: 3px 3px 0 var(--color-ink);
+  }
+  .narration::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--color-ink); filter: url(#ink-rough); pointer-events: none; }
+  .narration-paper { background: var(--color-paper); }
+  /* Comic gutter grid. */
+  .gutter { gap: 1.1rem; }
+  /* Fading halftone edge, used to blend art into paper. */
+  .halftone-fade {
+    background-image: radial-gradient(circle, rgb(36 34 30 / 0.35) 1.2px, transparent 1.5px);
+    background-size: 7px 7px;
+    mask-image: linear-gradient(to bottom, transparent, black 60%);
+  }
+  /* Hand-drawn underline on hover. */
+  .ink-link { background-image: linear-gradient(var(--color-ember), var(--color-ember)); background-size: 0% 3px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.35s ease; }
+  .ink-link:hover { background-size: 100% 3px; }
+  /* Tactile press for buttons. */
+  .press { transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.15s ease, color 0.15s ease; box-shadow: 4px 4px 0 var(--color-ink); }
+  .stamp-in { animation: stamp-in 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+  @keyframes stamp-in { from { transform: scale(1.9) rotate(-12deg); opacity: 0; } 70% { opacity: 1; } to { transform: scale(1) rotate(-3deg); opacity: 1; } }
+  .press:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--color-ink); }
+  .press:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--color-ink); }
 }
 
 @media (prefers-reduced-motion: reduce) {

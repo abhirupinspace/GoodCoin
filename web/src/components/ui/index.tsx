@@ -18,7 +18,7 @@ export function Button({
   href?: string; onClick?: () => void; tone?: Tone; size?: "md" | "lg"; children: ReactNode; disabled?: boolean;
   type?: "button" | "submit"; className?: string; external?: boolean;
 }) {
-  const cls = `display inline-flex items-center justify-center gap-2 px-6 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+  const cls = `display press inline-flex items-center justify-center gap-2 px-6 disabled:cursor-not-allowed disabled:opacity-50 ${
     size === "lg" ? "h-14 text-2xl" : "h-11 text-xl"
   } ${TONES[tone]} ${className}`;
   if (href)
@@ -49,9 +49,10 @@ export function Stamp({ children, tone = "red", className = "" }: { children: Re
   );
 }
 
+/** Final outcomes stamp in (only ever rendered from settled on-chain state). */
 export function OutcomeStamp({ outcome, ended = false }: { outcome: "Open" | "Caught" | "Smothered"; ended?: boolean }) {
-  if (outcome === "Caught") return <Stamp tone="forest">Caught</Stamp>;
-  if (outcome === "Smothered") return <Stamp tone="red">Smothered</Stamp>;
+  if (outcome === "Caught") return <Stamp tone="forest" className="stamp-in">Caught</Stamp>;
+  if (outcome === "Smothered") return <Stamp tone="red" className="stamp-in">Smothered</Stamp>;
   if (ended) return <Stamp tone="ink">Ended · unsettled</Stamp>;
   return <Stamp tone="ember">Burning</Stamp>;
 }
