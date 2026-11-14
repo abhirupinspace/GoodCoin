@@ -40,6 +40,8 @@
 | 60-day simulation | [`sim/out/SIXTY_DAYS.md`](sim/out/SIXTY_DAYS.md) (supply under 5 scenarios plus a parameter sweep) |
 | Full 5-year simulation | [`sim/out/REPORT.md`](sim/out/REPORT.md) (8 scenarios, 6 attacks, 3 sweeps) |
 | Live testnet run | [8 steps, every rule exercised, links to every transaction](#live-run-on-testnet) |
+| Fire factory | [`fires-ab92.testnet`](#anyone-can-light-a-fire): anyone launches a locked fire with the flagship's exact code |
+| Real time | [Neon mirror + Realtime](#real-time): gifts, catches and burns stream to every page |
 
 ---
 
@@ -245,6 +247,46 @@ cd web && npm install && npm run dev      # http://localhost:3000 (NEXT_PUBLIC_G
 
 ---
 
+## Anyone can light a fire
+
+The [fire factory](factory/src/lib.rs) `fires-ab92.testnet` lets anyone launch their own streak coin for a cause, in one transaction, from [`/fires/new`](web/src/components/fires/CreateFire.tsx).
+
+**What the factory guarantees:**
+- **Born locked.** `create_fire` creates `<name>.fires-ab92.testnet`, funds its storage, deploys the fire code and calls `new(config)` in a single batch. No key is ever added.
+- **Identical code.** The embedded fire code is byte-identical to the flagship's. `fire_code_sha256()` returns `c26e653b…604f6c`, and every child reports the flagship's `code_hash`, `E5yjCoi4…zsguh`.
+- **What a creator can set:** cycle length (5 minutes to 30 days), minimum gift (at least 0.05 NEAR), starting goal and 1–4 causes.
+- **What stays fixed:** the economics stay at production values (fee 10%, markup 25%, allowance 0.25% and the genesis floor).
+- **Cost:** about 3.24 NEAR covers the contract's storage. The rest of the deposit becomes the Hearth seed. If creation fails, everything is refunded.
+- **No admin:** the factory has no owner, no setters and 0 access keys.
+
+**Honest limit.** A community fire's causes are chosen by its creator, not curated. The UI says so before anyone gives.
+
+| | |
+|---|---|
+| Factory | [`fires-ab92.testnet`](https://testnet.nearblocks.io/address/fires-ab92.testnet), 0 keys, 8 unit tests |
+| Demo community fire (10-minute cycles, goal 3) | [`oss-sprint.fires-ab92.testnet`](https://testnet.nearblocks.io/address/oss-sprint.fires-ab92.testnet), 0 keys, created by [this transaction](https://testnet.nearblocks.io/txns/69qkTwBxifhyQRN96jPtKa2rmzYuNVJ784uXhhv5VWFY) |
+
+## Real time
+
+The chain stays the source of truth. [Neon](https://neon.tech) Postgres is a read mirror that anyone can rebuild from the contracts' events and views. Neon Realtime pushes every change to every open page.
+
+```
+wallet tx ──► chain ──► /api/ingest (re-reads the tx from RPC) ──┐
+CLI / bots ─► chain ──► /api/sync every minute (FastNEAR tx index)├─► Neon: contracts · snapshots · fires · events
+                         + keeper: settle() / payout() when due ──┘            │ Neon Realtime (sealed live SQL)
+                                                                              ▼
+                       /fires directory · live ledger · every page (react-query refresh on change)
+```
+
+**How each piece works:**
+- **[Ingest](web/src/server/indexer.ts).** The ingest endpoint never trusts what the browser sends. It re-fetches the transaction from chain and records only receipts executed by known fires or by the factory.
+- **[Events](web/src/server/events.ts).** NEP-297 logs (`goodcoin`, `goodcoin_factory` and `nep141`) become rows. The parser is tested against a real testnet transaction.
+- **[Keeper](web/src/server/keeper.ts).** `settle()` and `payout()` are permissionless by design. A small keeper account (`keeper.gcfund-ab92.testnet`) calls them when they're due, so fires catch or smother live without anyone clicking. It can only spend its own gas.
+- **[Live queries](web/src/server/live.ts).** The browser subscribes only to whitelisted, server-sealed queries: the directory, a fire's snapshot, its fires and the ledger.
+- **Without Realtime:** if Realtime is unavailable, the site keeps working on RPC polling.
+
+Demo activity uses real testnet transactions: `deploy/demo-bots.sh <fire> [N]` makes N bot accounts give into the current cycle.
+
 ## Verify it yourself (60 seconds, no wallet)
 
 ```sh
@@ -322,6 +364,8 @@ Every mint and burn is therefore indexable from the chain alone.
 
 ```sh
 cd contract && cargo test                                # 46 tests: every rule, error and invariant, golden trace, property test
+cd factory && cargo test                                 # 8 tests: names, bounds, fixed economics, cost, registry
+cd web && npx vitest run                                 # event parser against a real testnet transaction
 cd sim && uv run pytest && uv run python -m goodsim      # 62 tests; regenerates the 5-year report
 cd sim && uv run python -m goodsim.sixty                 # regenerates the 60-day report and chart
 ./deploy/deploy.sh demo <contract>.testnet <team>.testnet <suffix> --lock   # deploy, seed, delete keys
@@ -343,7 +387,9 @@ contract/  Rust NEAR contract (near-sdk 5.30): fire, payout, claims, hearth, kin
 sim/       Python: exact integer reference model + Monte Carlo (5-year study, 60-day study, attacks)
 tests/     golden trace replayed by both the simulator and the contract tests
 deploy/    make_config.py (production / demo), deploy.sh (deploy + seed + lock), e2e.sh (live run)
-web/       Next.js 16 site and app: token page, Good Wall log, Hearth, claim, redeem
+factory/   Rust fire factory: launches locked fires with the flagship's exact code (embeds contract wasm)
+web/       Next.js 16 site and app: token page, Good Wall log, fire directory, create-fire, live ledger
+web/src/server/  indexer (chain → Neon), keeper, sealed live queries; web/db/schema.sql
 ```
 
 ## Roadmap
