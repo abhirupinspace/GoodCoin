@@ -23,7 +23,10 @@ export default function Home() {
       {/* 00 HERO --------------------------------------------------------- */}
       <Hero
         variant="cinematic"
-        shot="gathering"
+        shot="assembly"
+        treatment="colour"
+        full
+        h1Class="display text-[clamp(3.4rem,9.5vw,9rem)] leading-[0.86]"
         marker={<>GOODCOIN <span className="text-red">/</span> A movement on NEAR</>}
         lines={["Make", "good", <span key="c" className="text-red">contagious.</span>]}
         lede={<><span className="text-ink">One cause. One community. One fire every week.</span> If enough distinct people give, the fire catches.</>}
@@ -119,6 +122,7 @@ export default function Home() {
             </Reveal>
           </div>
           <Reveal delay={0.1} className="self-end">
+            <ImageReveal shot="brazier" treatment="colour" className="mb-12 aspect-[16/9] w-full border border-line" />
             <HearthNumbers light />
             <p className="meta mt-8 border-l-2 border-red pl-4 text-mute">The floor is in NEAR. It is not a market price.</p>
           </Reveal>

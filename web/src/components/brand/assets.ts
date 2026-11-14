@@ -9,6 +9,8 @@ export interface Asset { src: string; width: number; height: number; flame?: { x
 export const ASSETS = {
   /** Master artwork: a torch-bearing crowd (transparent PNG). */
   crowd: { src: "/img/crowd.png", width: 2160, height: 1215, flame: { x: 57, y: 13, rx: 17, ry: 17 } },
+  /** The gathering: a crowd around the communal fire under flame banners (opaque, already red). */
+  hearth: { src: "/img/hero1.png", width: 1672, height: 941, flame: { x: 50, y: 66, rx: 14, ry: 12 } },
 } satisfies Record<string, Asset>;
 
 export type AssetName = keyof typeof ASSETS;
@@ -16,6 +18,10 @@ export type AssetName = keyof typeof ASSETS;
 export interface Shot { asset: AssetName; x: number; y: number; zoom: number }
 
 export const SHOTS = {
+  /** The whole gathering around the communal fire. */
+  assembly: { asset: "hearth", x: 50, y: 50, zoom: 1 },
+  /** The communal fire itself: the Hearth. */
+  brazier: { asset: "hearth", x: 50, y: 64, zoom: 2 },
   /** Everyone. */
   gathering: { asset: "crowd", x: 50, y: 55, zoom: 1 },
   /** The lone torch: the spark. */

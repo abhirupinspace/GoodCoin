@@ -75,12 +75,12 @@ export function ImageReveal({ shot, treatment, className = "", delay = 0 }: { sh
 /* ================================================================== motion */
 
 /** Content that rises in when scrolled into view. */
-export function Reveal({ children, delay = 0, className = "", as = "div" }: { children: ReactNode; delay?: number; className?: string; as?: "div" | "li" | "section" | "article" }) {
+export function Reveal({ children, delay = 0, className = "", as = "div", mount = false }: { children: ReactNode; delay?: number; className?: string; as?: "div" | "li" | "section" | "article"; /** Play on mount (heroes), not on scroll. */ mount?: boolean }) {
   const reduce = useReducedMotion();
   const Comp = motion[as];
   if (reduce) return <Comp className={className}>{children}</Comp>;
   return (
-    <Comp className={className} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-8% 0px" }} transition={{ duration: 0.9, delay, ease: EASE }}>
+    <Comp className={className} initial={{ opacity: 0, y: 28 }} {...(mount ? { animate: { opacity: 1, y: 0 } } : { whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-8% 0px" } })} transition={{ duration: 0.9, delay, ease: EASE }}>
       {children}
     </Comp>
   );
@@ -172,9 +172,11 @@ export type HeroVariant = "cinematic" | "split" | "red" | "editorial" | "poster"
  * - poster: giant type with a single flame symbol (faq)
  * - minimal: technical, small mark, ruled metadata (security, legal)
  */
-export function Hero({ variant, marker, lines, lede, actions, shot, meta, children, h1Class }: {
+export function Hero({ variant, marker, lines, lede, actions, shot, meta, children, h1Class, treatment, full = false }: {
   variant: HeroVariant; marker: ReactNode; lines: ReactNode[]; lede?: ReactNode; actions?: ReactNode;
   shot?: ShotName; meta?: [ReactNode, ReactNode][]; children?: ReactNode; h1Class?: string;
+  /** Override the image treatment. */ treatment?: Treatment;
+  /** Cinematic only: the image spans the full width instead of the right side. */ full?: boolean;
 }) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
@@ -185,16 +187,16 @@ export function Hero({ variant, marker, lines, lede, actions, shot, meta, childr
 
   const Copy = (
     <>
-      <Reveal><div className="meta text-mute">{marker}</div></Reveal>
+      <Reveal mount><div className="meta text-mute">{marker}</div></Reveal>
       <Lines as="h1" lines={lines} className={`${big} mt-6 text-ink`} delay={0.1} />
-      {lede && <Reveal delay={0.35}><div className="mt-8 max-w-md text-lg leading-relaxed text-mute sm:text-xl">{lede}</div></Reveal>}
-      {actions && <Reveal delay={0.45}><div className="mt-10 flex flex-wrap gap-3">{actions}</div></Reveal>}
-      {children && <Reveal delay={0.5}><div className="mt-10">{children}</div></Reveal>}
+      {lede && <Reveal mount delay={0.35}><div className="mt-8 max-w-md text-lg leading-relaxed text-mute sm:text-xl">{lede}</div></Reveal>}
+      {actions && <Reveal mount delay={0.45}><div className="mt-10 flex flex-wrap gap-3">{actions}</div></Reveal>}
+      {children && <Reveal mount delay={0.5}><div className="mt-10">{children}</div></Reveal>}
     </>
   );
 
   const MetaGrid = meta && (
-    <Reveal delay={0.4}>
+    <Reveal mount delay={0.4}>
       <dl className="grid grid-cols-2 border-t border-line md:grid-cols-4">
         {meta.map(([k, v], i) => (
           <div key={i} className={`border-b border-line py-5 pr-4 ${i % 4 ? "md:border-l md:pl-5" : ""} ${i % 2 ? "border-l pl-5 md:pl-5" : ""}`}>
@@ -211,12 +213,13 @@ export function Hero({ variant, marker, lines, lede, actions, shot, meta, childr
       <section ref={ref} className={`relative flex min-h-[min(calc(100svh-4rem),60rem)] items-end overflow-hidden ${variant === "red" ? "bg-blood" : "bg-paper"}`}>
         {shot && (
           <motion.div className="absolute inset-0" style={reduce ? undefined : { scale, opacity: fade }}>
-            <Plate shot={shot} treatment={variant === "red" ? "red" : "fire"} priority className="absolute inset-0 md:left-[40%]" sizes="100vw" />
+            <Plate shot={shot} treatment={treatment ?? (variant === "red" ? "red" : "fire")} priority className={`absolute inset-0 ${full ? "" : "md:left-[40%]"}`} sizes="100vw" />
           </motion.div>
         )}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/40 to-transparent md:bg-gradient-to-r md:from-paper md:via-paper/60 md:to-transparent" aria-hidden />
+        <div className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-paper via-paper/50 to-transparent md:bg-gradient-to-r md:from-paper ${full ? "md:via-paper/80 md:to-paper/0" : "md:via-paper/60 md:to-transparent"}`} aria-hidden />
+        {full && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-paper to-transparent" aria-hidden />}
         {variant === "cinematic" && <EmberField />}
-        <div className="shell relative z-10 pb-16 pt-40 md:pb-24">{Copy}{MetaGrid && <div className="mt-16">{MetaGrid}</div>}</div>
+        <div className="shell relative z-10 pb-14 pt-32 md:pb-20">{Copy}{MetaGrid && <div className="mt-16">{MetaGrid}</div>}</div>
       </section>
     );
   }
