@@ -1,6 +1,7 @@
 import { EmberField, FinalCall, Hero, ImageReveal, Label, Lines, Reveal, Section, TextLink } from "@/components/brand";
 import { HomeGoodWall } from "@/components/home/HomeGoodWall";
 import { LiveFire } from "@/components/fire/LiveFire";
+import { LiveFeed } from "@/components/live/LiveFeed";
 import { HearthNumbers } from "@/components/hearth/HearthNumbers";
 import { Button } from "@/components/ui";
 
@@ -139,6 +140,14 @@ export default function Home() {
           <TextLink href="/good-wall">Open the archive</TextLink>
         </div>
         <div className="mt-16"><HomeGoodWall /></div>
+        <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-start">
+          <div>
+            <p className="meta text-mute">Every fire, every hand, as it happens</p>
+            <p className="mt-4 max-w-md text-lg text-mute">Gifts, catches, burns and new fires stream straight from the chain.</p>
+            <div className="mt-8"><TextLink href="/fires">See every fire</TextLink></div>
+          </div>
+          <LiveFeed limit={8} />
+        </div>
       </Section>
 
       {/* 07 TRUST -------------------------------------------------------- */}

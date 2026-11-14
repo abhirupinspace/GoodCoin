@@ -5,7 +5,9 @@ import { useState, type ReactNode } from "react";
 import { FlameMark } from "@/components/art";
 import { Logo } from "@/components/ui";
 import { ConnectButton } from "@/components/wallet/ConnectButton";
-import { useStats } from "@/lib/useQueries";
+import { useConfig, useStats } from "@/lib/useQueries";
+import { LiveDot } from "@/components/live/Live";
+import { useFireId } from "@/lib/fire-context";
 
 export const APP_NAV = [
   { href: "/app", label: "The Fire", mobile: true },
@@ -51,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-col pb-24 lg:pb-0">
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-paper/80 px-4 backdrop-blur-md sm:px-8">
           <div className="lg:hidden"><Logo /></div>
-          <p className="meta hidden text-mute lg:block">The operational centre of the movement</p>
+          <FireSwitcher />
           <ConnectButton />
         </header>
         <main className="flex-1 px-4 py-10 sm:px-10">{children}</main>
@@ -69,6 +71,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
       </nav>
+    </div>
+  );
+}
+
+function FireSwitcher() {
+  const fire = useFireId();
+  const { data: config } = useConfig();
+  const label = config?.label.replace(/^community:/, "") ?? "…";
+  return (
+    <div className="hidden min-w-0 items-center gap-5 lg:flex">
+      <LiveDot />
+      <p className="meta truncate text-mute">
+        <span className="text-ink">{label}</span> · {fire}
+      </p>
+      <Link href="/fires" className="meta text-mute underline-offset-4 hover:text-ember hover:underline">Switch fire</Link>
     </div>
   );
 }

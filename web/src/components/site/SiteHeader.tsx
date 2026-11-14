@@ -9,7 +9,8 @@ const NAV = [
   { href: "/how-it-works", label: "How it works", no: "02" },
   { href: "/tokenomics", label: "Tokenomics", no: "03" },
   { href: "/good-wall", label: "Good Wall", no: "04" },
-  { href: "/about", label: "About", no: "05" },
+  { href: "/fires", label: "All fires", no: "05" },
+  { href: "/about", label: "About", no: "06" },
 ];
 
 export function SiteHeader() {

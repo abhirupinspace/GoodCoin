@@ -7,6 +7,8 @@ import { GiveForm } from "@/components/fire/GiveForm";
 import { KindleModule } from "@/components/fire/KindleModule";
 import { LiveFire } from "@/components/fire/LiveFire";
 import { SettleBar } from "@/components/fire/SettleBar";
+import { LiveFeed } from "@/components/live/LiveFeed";
+import { useFireId } from "@/lib/fire-context";
 import { Stat } from "@/components/ui";
 import { Card, ContractLabel, Loading, PageHeader, QueryError } from "@/components/app/shell";
 import { FireOutcome } from "@/components/app/FireOutcome";
@@ -111,12 +113,13 @@ function GiveSlot() {
 }
 
 export function FirePage() {
+  const fireId = useFireId();
   const { data: stats, error } = useStats();
   const current = stats ? Number(stats.current_week) : null;
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        eyebrow={current === null ? "Live from the contract" : `Fire №${current} · live from the contract`}
+        eyebrow={current === null ? `${fireId} · live` : `Fire #${current} · ${fireId} · live`}
         title="The Fire"
         intro="One fire, one cause, this week. Watch it, join it, and in its final hours, help rescue it. Anyone can look; actions ask for a wallet."
       />
@@ -161,9 +164,11 @@ export function FirePage() {
         </Card>
         <Card eyebrow="On-chain record" title="Recent fires">
           {current === null ? <Loading rows={4} /> : <RecentFires current={current} />}
-          <ContractLabel>Contract state via list_fires, not an event feed</ContractLabel>
+          <ContractLabel>Contract state via list_fires</ContractLabel>
         </Card>
       </div>
+
+      <div className="mt-8"><LiveFeed fire={fireId} title="This fire's live ledger" limit={15} /></div>
     </div>
   );
 }
